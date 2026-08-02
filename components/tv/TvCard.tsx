@@ -20,6 +20,7 @@ export function TvCard({ show, showRanking = false, ranking }: TvCardProps) {
           src={getImageUrl(show.poster_path, "w500")}
           alt={show.name}
           fill
+          unoptimized
           className="object-cover group-hover:scale-105 transition-transform duration-300"
         />
 

@@ -27,6 +27,7 @@ export function TvCarouselSlide({ shows, currentIndex }: TvCarouselSlideProps) {
               src={img}
               alt={show.name}
               fill
+              unoptimized
               priority={i === currentIndex}
               className="object-cover object-top"
             />

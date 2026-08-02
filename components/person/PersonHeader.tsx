@@ -35,6 +35,7 @@ export default function PersonHeader({
           src={getImageUrl(profilePath, "w500")}
           alt={name}
           fill
+          unoptimized
           className="object-cover"
         />
       </div>

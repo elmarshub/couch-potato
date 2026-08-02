@@ -127,6 +127,7 @@ export function CategoryCarousel({
                       }
                       alt={movie.title}
                       fill
+                      unoptimized
                       className="object-cover group-hover/card:scale-105 transition-transform duration-300"
                       sizes="(max-width: 640px) 140px, (max-width: 768px) 160px, (max-width: 1024px) 180px, 200px"
                     />

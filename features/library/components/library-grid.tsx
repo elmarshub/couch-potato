@@ -43,6 +43,7 @@ function LibraryCard({
           src={getImageUrl(data?.poster_path, "w500")}
           alt={title || "Poster"}
           fill
+          unoptimized
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
           className="object-cover transition-transform duration-300 group-hover:scale-105"
         />

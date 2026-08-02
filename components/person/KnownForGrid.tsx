@@ -32,6 +32,7 @@ export default function KnownForGrid({ items }: { items: PersonCredit[] }) {
                 src={getImageUrl(c.poster_path ?? null, "w500")}
                 alt={c.title ?? c.name ?? ""}
                 fill
+                unoptimized
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
               />
             </div>

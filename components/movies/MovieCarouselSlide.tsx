@@ -30,6 +30,7 @@ export function MovieCarouselSlide({
               src={images}
               alt={movie.title}
               fill
+              unoptimized
               priority={i === currentIndex}
               className="object-cover object-top"
             />

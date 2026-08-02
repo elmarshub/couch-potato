@@ -70,6 +70,7 @@ export function MediaDetailView({ type, id }: MediaDetailViewProps) {
             src={getImageUrl(details.backdrop_path, "original")}
             alt={title}
             fill
+            unoptimized
             className="object-cover object-top"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/70 to-transparent" />
@@ -90,6 +91,7 @@ export function MediaDetailView({ type, id }: MediaDetailViewProps) {
               src={getImageUrl(details.poster_path)}
               alt={title}
               fill
+              unoptimized
               className="object-cover rounded-lg"
             />
           </div>
@@ -172,6 +174,7 @@ export function MediaDetailView({ type, id }: MediaDetailViewProps) {
                           src={getImageUrl(cast.profile_path ?? null)}
                           alt={cast.name}
                           fill
+                          unoptimized
                           className="object-cover"
                         />
                       </div>
@@ -194,6 +197,7 @@ export function MediaDetailView({ type, id }: MediaDetailViewProps) {
                           src={getImageUrl(m.poster_path, "w500")}
                           alt={m.title ?? m.name}
                           fill
+                          unoptimized
                           className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       </div>

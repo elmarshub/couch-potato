@@ -126,6 +126,7 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
                 src={images}
                 alt={movie.title}
                 fill
+                unoptimized
                 priority={i === index}
                 className="object-cover object-center sm:object-top"
               />

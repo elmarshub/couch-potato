@@ -36,6 +36,7 @@ export function BrowseCard({
           src={getImageUrl(posterPath, "w500")}
           alt={title}
           fill
+          unoptimized
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
           className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
