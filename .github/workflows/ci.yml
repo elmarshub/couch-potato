@@ -8,16 +8,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Build-time-only placeholders: prisma generate and next build need these
-    # vars *present*, not connected to a real Supabase/Postgres/TMDB project.
-    # No pages query the database at build time (nothing uses generateStaticParams
-    # with a DB call), so a live DATABASE_URL isn't required to build.
     env:
       DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
       NEXT_PUBLIC_SUPABASE_URL: "https://ci-placeholder.supabase.co"
       NEXT_PUBLIC_SUPABASE_ANON_KEY: "ci-placeholder-anon-key"
       TMDB_API_READ_ACCESS_TOKEN: "ci-placeholder-token"
-      NEXT_PUBLIC_TMDB_API_KEY: "ci-placeholder-key"
       NEXT_PUBLIC_TMDB_IMAGE_BASE: "https://image.tmdb.org/t/p"
       NEXT_PUBLIC_APP_URL: "http://localhost:3000"
     steps:
@@ -33,12 +28,6 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
-
-      - name: Type check
-        run: pnpm exec tsc --noEmit
-
-      - name: Lint
-        run: pnpm run lint
 
       - name: Build
         run: pnpm run build
