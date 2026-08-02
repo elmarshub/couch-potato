@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const MAX_CONTENT_WIDTH_CLASS = "max-w-[1800px]";
 const SLIDE_DURATION = 7000;
 const PROGRESS_RESET_DELAY_MS = 80;
+const SWIPE_THRESHOLD_PX = 50;
 
 interface HeroCarouselProps {
   movies: Movie[];
@@ -48,6 +49,63 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
   }, []);
 
   useEffect(() => {
+    const el = sectionRef.current;
+    if (!el || !displayMovies.length) return;
+
+    let startX = 0;
+    let startY = 0;
+    let activeTouchId: number | null = null;
+
+    function handleTouchStart(e: TouchEvent) {
+      if (e.touches.length > 1) {
+        activeTouchId = null;
+        return;
+      }
+      const touch = e.touches[0];
+      activeTouchId = touch.identifier;
+      startX = touch.clientX;
+      startY = touch.clientY;
+    }
+
+    function handleTouchEnd(e: TouchEvent) {
+      if (activeTouchId === null) return;
+      const touch = Array.from(e.changedTouches).find(
+        (t) => t.identifier === activeTouchId
+      );
+      activeTouchId = null;
+      if (!touch) return;
+
+      const deltaX = touch.clientX - startX;
+      const deltaY = touch.clientY - startY;
+
+      if (
+        Math.abs(deltaX) < SWIPE_THRESHOLD_PX ||
+        Math.abs(deltaX) < Math.abs(deltaY)
+      ) {
+        return;
+      }
+
+      setIndex((prev) => {
+        const length = displayMovies.length;
+        return deltaX < 0 ? (prev + 1) % length : (prev - 1 + length) % length;
+      });
+    }
+
+    function handleTouchCancel() {
+      activeTouchId = null;
+    }
+
+    el.addEventListener("touchstart", handleTouchStart, { passive: true });
+    el.addEventListener("touchend", handleTouchEnd, { passive: true });
+    el.addEventListener("touchcancel", handleTouchCancel, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", handleTouchStart);
+      el.removeEventListener("touchend", handleTouchEnd);
+      el.removeEventListener("touchcancel", handleTouchCancel);
+    };
+  }, [displayMovies.length]);
+
+  useEffect(() => {
     if (!displayMovies.length || isPaused) return;
 
     const interval = setInterval(() => {
@@ -55,7 +113,7 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
     }, SLIDE_DURATION);
 
     return () => clearInterval(interval);
-  }, [displayMovies.length, isPaused]);
+  }, [displayMovies.length, isPaused, index]);
 
   useEffect(() => {
     const progressElement = document.getElementById(`progress-${index}`);
