@@ -1,21 +1,22 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Search, User, LogOut, Bell } from "lucide-react";
+import { Search, User, LogOut, Bookmark, Loader2 } from "lucide-react";
 import { navLinks } from "./navbarLinks";
 import { motion, AnimatePresence } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/providers/auth-provider";
+import type { AuthUser } from "@/features/auth/types";
+import { getAvatarUrl, getInitials } from "@/lib/avatar";
+import { routes } from "@/lib/routes";
 
 interface MobileMenuProps {
   isOpen: boolean;
   pathname: string;
   onClose: () => void;
-  user: any;
+  user: AuthUser | null;
   isLoading: boolean;
 }
 
@@ -24,15 +25,13 @@ const MobileMenu = ({
   pathname,
   onClose,
   user,
-  isLoading,
 }: MobileMenuProps) => {
-  const { signOut } = useAuth();
+  const { signOut, isSigningOut } = useAuthContext();
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop with fade animation */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -42,7 +41,6 @@ const MobileMenu = ({
             onClick={onClose}
           />
 
-          {/* Mobile Menu with slide and bounce animation */}
           <motion.div
             initial={{ y: -400, opacity: 0 }}
             animate={{
@@ -65,13 +63,10 @@ const MobileMenu = ({
             }}
             className="fixed left-0 right-0 top-[72px] z-40 md:hidden"
           >
-            {/* Glassmorphism container */}
             <div className="mx-4 mt-2 rounded-2xl bg-gradient-to-br from-[#1a1a1a]/95 via-[#141414]/95 to-[#0a0a0a]/95 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden">
-              {/* Decorative gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-red-600/5 via-transparent to-purple-600/5 pointer-events-none" />
 
               <div className="relative px-4 py-6 space-y-6">
-                {/* User Info Section - Only show when authenticated */}
                 {user && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
@@ -86,8 +81,13 @@ const MobileMenu = ({
                     className="flex items-center gap-3 p-4 bg-gradient-to-r from-red-600/20 to-red-800/20 rounded-xl border border-red-500/20"
                   >
                     <Avatar className="">
-                      <AvatarImage src="https://github.com/shadcn.png" />
-                      <AvatarFallback>U</AvatarFallback>
+                      <AvatarImage
+                        src={user.avatarUrl ?? getAvatarUrl(user.email, user.name, 64)}
+                        alt=""
+                      />
+                      <AvatarFallback>
+                        {getInitials(user.name, user.email)}
+                      </AvatarFallback>
                     </Avatar>
 
                     <div className="flex-1 min-w-0">
@@ -101,7 +101,6 @@ const MobileMenu = ({
                   </motion.div>
                 )}
 
-                {/* Mobile Nav Links */}
                 <nav>
                   <ul className="space-y-2">
                     {navLinks.map((link, index) => (
@@ -156,7 +155,6 @@ const MobileMenu = ({
                   </ul>
                 </nav>
 
-                {/* Divider */}
                 <motion.div
                   initial={{ scaleX: 0 }}
                   animate={{
@@ -169,7 +167,6 @@ const MobileMenu = ({
                   className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent origin-left"
                 />
 
-                {/* Mobile Actions */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{
@@ -203,14 +200,14 @@ const MobileMenu = ({
 
                   {user ? (
                     <>
-                      <Link href="/watchlist" onClick={onClose}>
+                      <Link href={routes.library} onClick={onClose}>
                         <motion.div whileTap={{ scale: 0.95 }}>
                           <Button
                             variant="outline"
                             className="w-full justify-start gap-3 border-white/20 mb-3 hover:bg-white/10 text-white hover:border-white/30 transition-all rounded-xl py-6"
                           >
-                            <Bell className="w-5 h-5" />
-                            My Watchlist
+                            <Bookmark className="w-5 h-5" />
+                            My Library
                           </Button>
                         </motion.div>
                       </Link>
@@ -233,10 +230,15 @@ const MobileMenu = ({
                             onClose();
                             signOut();
                           }}
-                          className="w-full justify-start gap-3 bg-red-600/20 hover:bg-red-600/30 text-red-500 border border-red-500/30 hover:border-red-500/50 transition-all rounded-xl py-6"
+                          disabled={isSigningOut}
+                          className="w-full justify-start gap-3 bg-red-600/20 hover:bg-red-600/30 text-red-500 border border-red-500/30 hover:border-red-500/50 transition-all rounded-xl py-6 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          <LogOut className="w-5 h-5" />
-                          Log Out
+                          {isSigningOut ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <LogOut className="w-5 h-5" />
+                          )}
+                          {isSigningOut ? "Signing out..." : "Log Out"}
                         </Button>
                       </motion.div>
                     </>

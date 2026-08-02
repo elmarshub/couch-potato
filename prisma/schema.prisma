@@ -9,7 +9,7 @@ datasource db {
   url      = env("DATABASE_URL") // This points to Neon
 }
 
-// User model (synced with Supabase Auth)
+// User model 
 model User {
   id        String   @id // Same ID as Supabase auth.users.id
   email     String   @unique
@@ -28,8 +28,8 @@ model User {
 model Favorite {
   id        String   @id @default(uuid())
   userId    String
-  mediaType String   // 'movie' or 'tv'
-  mediaId   Int      // TMDB ID
+  mediaType String   
+  mediaId   Int      
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -43,8 +43,8 @@ model Favorite {
 model Watchlist {
   id        String   @id @default(uuid())
   userId    String
-  mediaType String   // 'movie' or 'tv'
-  mediaId   Int      // TMDB ID
+  mediaType String   
+  mediaId   Int      
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

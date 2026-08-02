@@ -1,14 +1,20 @@
 "use client";
 
 import { Bookmark } from "lucide-react";
-import { useIsInWatchlist, useToggleWatchlist } from "@/hooks/useWatchlist";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { useAuthContext } from "@/lib/auth-context";
+import {
+  libraryErrorMessage,
+  useIsInWatchlist,
+  useToggleWatchlist,
+} from "@/features/library/queries";
+import type { MediaType } from "@/features/media/types";
+import { useAuthContext } from "@/providers/auth-provider";
+import { routes } from "@/lib/routes";
 
 interface WatchlistButtonProps {
   mediaId: number;
-  mediaType: "movie" | "tv";
+  mediaType: MediaType;
 }
 
 export default function WatchlistButton({
@@ -17,38 +23,44 @@ export default function WatchlistButton({
 }: WatchlistButtonProps) {
   const isInWatchlist = useIsInWatchlist(mediaId, mediaType);
   const toggleWatchlist = useToggleWatchlist();
-  const { user } = useAuthContext();
+  const { isAuthenticated } = useAuthContext();
   const router = useRouter();
+
+  const handleClick = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!isAuthenticated) {
+      toast.error("Sign in to save titles");
+      router.push(routes.loginWithRedirect(window.location.pathname));
+      return;
+    }
+
+    toggleWatchlist.mutate(
+      { mediaId, mediaType, isActive: isInWatchlist },
+      {
+        onSuccess: () =>
+          toast.success(
+            isInWatchlist ? "Removed from watchlist" : "Added to watchlist"
+          ),
+        onError: (error) =>
+          toast.error(libraryErrorMessage(error, "Could not update watchlist")),
+      }
+    );
+  };
 
   return (
     <button
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (!user) {
-          toast.error("Please log in to bookmark");
-          router.push("/login");
-          return;
-        }
-        toggleWatchlist.mutate(
-          { mediaId, mediaType, isInWatchlist },
-          {
-            onSuccess: () => {
-              toast.success(
-                isInWatchlist ? "Removed from watchlist" : "Added to watchlist"
-              );
-            },
-            onError: () => {
-              toast.error("Failed to update watchlist");
-            },
-          }
-        );
-      }}
-      className="p-2 cursor-pointer hover:scale-y-90"
+      type="button"
+      onClick={handleClick}
+      disabled={toggleWatchlist.isPending}
+      aria-pressed={isInWatchlist}
+      aria-label={isInWatchlist ? "Remove from watchlist" : "Add to watchlist"}
+      className="cursor-pointer p-2 disabled:opacity-60"
     >
       <Bookmark
-        className={`w-6 h-6 transition-colors duration-200 ${
-          isInWatchlist ? "text-yellow-500 fill-yellow-500" : "text-gray-400"
+        className={`h-6 w-6 transition-colors duration-200 ${
+          isInWatchlist ? "fill-yellow-500 text-yellow-500" : "text-gray-400"
         }`}
       />
     </button>

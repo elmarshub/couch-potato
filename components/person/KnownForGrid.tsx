@@ -2,27 +2,28 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { getImageUrl } from "@/lib/tmdb/fetcher";
+import { getImageUrl } from "@/lib/format";
 
-interface CreditItem {
-  id: number;
-  credit_id: string;
-  media_type: "movie" | "tv";
-  title?: string;
-  name?: string;
-  poster_path?: string | null;
-}
+import type { PersonCredit } from "@/features/media/types";
+import { routes } from "@/lib/routes";
 
-export default function KnownForGrid({ items }: { items: CreditItem[] }) {
+export default function KnownForGrid({ items }: { items: PersonCredit[] }) {
   if (!items?.length) return null;
+  const byMedia = new Map<string, PersonCredit>();
+  for (const c of items) {
+    const key = `${c.media_type}-${c.id}`;
+    const existing = byMedia.get(key);
+    if (!existing || c.popularity > existing.popularity) byMedia.set(key, c);
+  }
+  const sorted = [...byMedia.values()].sort((a, b) => b.popularity - a.popularity);
   return (
     <div className="mt-10">
       <h2 className="text-2xl font-semibold mb-4">Known For</h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {items.slice(0, 18).map((c) => (
+        {sorted.slice(0, 18).map((c) => (
           <Link
-            key={`${c.credit_id}-${c.id}`}
-            href={c.media_type === "tv" ? `/tvshows/${c.id}` : `/movies/${c.id}?type=movie`}
+            key={`${c.media_type}-${c.id}`}
+            href={routes.media(c.media_type, c.id)}
             prefetch
             className="group"
           >
@@ -34,12 +35,13 @@ export default function KnownForGrid({ items }: { items: CreditItem[] }) {
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
               />
             </div>
-            <div className="mt-2 text-sm line-clamp-1">{c.title ?? c.name}</div>
+            <div className="mt-2 text-sm font-medium line-clamp-1">{c.title ?? c.name}</div>
+            {c.character && (
+              <div className="text-xs text-gray-400 line-clamp-1">as {c.character}</div>
+            )}
           </Link>
         ))}
       </div>
     </div>
   );
 }
-
-

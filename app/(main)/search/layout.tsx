@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description: "Search for movies, TV shows, and people. Find your favorite entertainment content on Couch Potato.",
   keywords: ["search", "movies", "TV shows", "people", "entertainment", "discover"],
   robots: {
-    index: false, // Don't index search pages
+    index: false,
     follow: true,
   },
   openGraph: {

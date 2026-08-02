@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Anton, Inter } from "next/font/google";
 import "./globals.css";
-import { Providers } from "./providers";
-import { Toaster } from "react-hot-toast";
+import { Providers } from "@/providers";
 import { baseMetadata } from "@/lib/metadata";
 
-const GeistSans = Inter({ subsets: ["latin"], variable: "--font-sans" });
-const GeistMono = Inter({ subsets: ["latin"], variable: "--font-mono" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const anton = Anton({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-anton",
+});
 
 export const metadata: Metadata = baseMetadata;
 
@@ -18,17 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`font-sans ${GeistSans.variable} ${GeistMono.variable} bg-[#141414] text-white antialiased`}
+        className={`font-sans ${inter.variable} ${anton.variable} bg-[#141414] text-white antialiased`}
       >
         <Providers>{children}</Providers>
-
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            className: "!mt-20",
-          }}
-        />
       </body>
     </html>
   );

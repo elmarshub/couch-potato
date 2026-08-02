@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { CategoryCarousel } from "@/components/functional/category-carousel";
 import { HeroCarousel } from "@/components/main/herocarousel";
-import { getMoviesByCategory, getNowPlayingMovies } from "@/lib/tmdb/movies";
+import {
+  fetchMoviesByCategory,
+  fetchNowPlayingMovies,
+  safeFetch,
+} from "@/features/media/api";
 import HomeInfiniteFeed from "@/components/functional/home-infinite-feed";
 
 export const metadata: Metadata = {
@@ -32,22 +36,22 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const movies = await getNowPlayingMovies();
+  const nowPlaying = await safeFetch(() => fetchNowPlayingMovies());
 
   const [trending, hollywood, popular, topRated, action, horror, animation] =
     await Promise.all([
-      getMoviesByCategory("trending"),
-      getMoviesByCategory("hollywood"),
-      getMoviesByCategory("popular"),
-      getMoviesByCategory("top-rated"),
-      getMoviesByCategory("action"),
-      getMoviesByCategory("horror"),
-      getMoviesByCategory("animation"),
+      safeFetch(() => fetchMoviesByCategory("trending")),
+      safeFetch(() => fetchMoviesByCategory("hollywood")),
+      safeFetch(() => fetchMoviesByCategory("popular")),
+      safeFetch(() => fetchMoviesByCategory("top-rated")),
+      safeFetch(() => fetchMoviesByCategory("action")),
+      safeFetch(() => fetchMoviesByCategory("horror")),
+      safeFetch(() => fetchMoviesByCategory("animation")),
     ]);
 
   return (
     <main className="mx-auto">
-      <HeroCarousel movies={movies} />
+      <HeroCarousel movies={nowPlaying.results} />
 
       <div className="space-y-8 pb-16">
         <CategoryCarousel
@@ -87,7 +91,6 @@ export default async function HomePage() {
         />
       </div>
 
-      {/* Infinite feeds */}
       <div className="container mx-auto px-4 pb-24">
         <HomeInfiniteFeed />
       </div>

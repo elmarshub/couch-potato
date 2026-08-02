@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { MovieCarouselSlide } from "./MovieCarouselSlide";
 import { MovieCarouselControls } from "./MovieCarouselControls";
 import { MovieCarouselContent } from "./MovieCarouselContent";
-import { Movie } from "@/types/movie";
+import { Movie } from "@/features/media/types";
 
 interface MovieCarouselProps {
   movies: Movie[];

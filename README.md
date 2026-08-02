@@ -1,15 +1,15 @@
-# 🍿 Couch Potato - Your Ultimate Movie & TV Discovery Platform
+# Couch Potato - Your Ultimate Movie & TV Discovery Platform
 
 A modern, responsive web application built with Next.js 15, React 19, and TypeScript that helps you discover, track, and manage your favorite movies and TV shows. Built with a cinematic design and smooth animations for an immersive viewing experience.
 
-## ✨ Features
+## Features
 
 - **User Authentication**: Secure login/signup with Supabase Auth
 - **Watchlist Management**: Save movies and shows you want to watch later
 - **Favorites System**: Mark your favorite content for quick access
 - **Profile Management**: Customize your viewing preferences
 
-## 🚀 Tech Stack
+## Tech Stack
 
 ### Frontend
 
@@ -18,6 +18,8 @@ A modern, responsive web application built with Next.js 15, React 19, and TypeSc
 - **TypeScript** - Type-safe development
 - **Tailwind CSS 4** - Utility-first styling with custom design system
 - **Framer Motion** - Smooth animations and transitions
+- **Zod** - Used for validations
+- **React Hook Query** - Data fetching and caching
 
 ### Backend & Database
 
@@ -31,32 +33,3 @@ A modern, responsive web application built with Next.js 15, React 19, and TypeSc
 - **TMDB API** - The Movie Database for movie/TV data
 - **React Query** - Server state management and caching
 - **Axios** - HTTP client for API requests
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/yourusername/couch-potato.git
-cd couch-potato
-```
-
-### 2. Install Dependencies
-
-```bash
-npm install
-# or
-yarn install
-# or
-pnpm install
-```
-
-``
-
-### 5. Start Development Server
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```

@@ -1,23 +1,25 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Search, Bell, User, LogOut } from "lucide-react";
+import { Search, Bell, Bookmark, User, LogOut, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/providers/auth-provider";
+import type { AuthUser } from "@/features/auth/types";
+import { getAvatarUrl, getInitials } from "@/lib/avatar";
+import { routes } from "@/lib/routes";
 
 interface NavbarActionsProps {
-  user: any;
+  user: AuthUser | null;
   isLoading: boolean;
 }
 
 const NavbarActions = ({ user, isLoading }: NavbarActionsProps) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
 
-  const { signOut } = useAuth();
+  const { signOut, isSigningOut } = useAuthContext();
 
   if (isLoading) {
     return (
@@ -74,13 +76,13 @@ const NavbarActions = ({ user, isLoading }: NavbarActionsProps) => {
           >
             <div className="w-8 h-8 rounded-full cursor-pointer bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center">
               <Avatar className="">
-                <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback>U</AvatarFallback>
+                <AvatarImage
+                  src={user.avatarUrl ?? getAvatarUrl(user.email, user.name, 64)}
+                  alt=""
+                />
+                <AvatarFallback>{getInitials(user.name, user.email)}</AvatarFallback>
               </Avatar>
             </div>
-            {/* <span className="text-white font-medium text-sm max-w-[100px] truncate">
-              {user.email?.split("@")[0] || "User"}
-            </span> */}
           </motion.button>
 
           <AnimatePresence>
@@ -118,13 +120,13 @@ const NavbarActions = ({ user, isLoading }: NavbarActionsProps) => {
                         Profile
                       </Button>
                     </Link>
-                    <Link href="/watchlist">
+                    <Link href={routes.library}>
                       <Button
                         onClick={() => setShowUserMenu(false)}
                         className="w-full flex items-center cursor-pointer justify-start gap-3 px-3 py-2 text-white hover:bg-white/10 rounded-lg transition-colors text-sm"
                       >
-                        <Bell className="w-4 h-4" />
-                        My Watchlist
+                        <Bookmark className="w-4 h-4" />
+                        My Library
                       </Button>
                     </Link>
                   </div>
@@ -134,10 +136,15 @@ const NavbarActions = ({ user, isLoading }: NavbarActionsProps) => {
                         setShowUserMenu(false);
                         signOut();
                       }}
-                      className="w-full flex items-center cursor-pointer justify-start gap-3 px-3 py-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors text-sm font-medium"
+                      disabled={isSigningOut}
+                      className="w-full flex items-center cursor-pointer justify-start gap-3 px-3 py-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      <LogOut className="w-4 h-4" />
-                      Log Out
+                      {isSigningOut ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <LogOut className="w-4 h-4" />
+                      )}
+                      {isSigningOut ? "Signing out..." : "Log Out"}
                     </Button>
                   </div>
                 </motion.div>

@@ -1,31 +1,32 @@
 "use client";
 
-import { useAuthContext } from "@/lib/auth-context";
+import { useEffect } from "react";
+import { useAuthContext } from "@/providers/auth-provider";
 import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Heart, Bookmark } from "lucide-react";
+// import { LogOut, Loader2 } from "lucide-react";
 import { ProfileForm } from "@/components/profile/profile-form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl, getInitials } from "@/lib/avatar";
 
 export default function ProfilePage() {
-  const { user, isLoading } = useAuthContext();
+  const { user, isLoading, isSigningOut } = useAuthContext();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && !user && !isSigningOut) {
+      router.replace("/login?redirectTo=%2Fprofile");
+    }
+  }, [isLoading, user, isSigningOut, router]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-muted/30">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto space-y-8">
-            <div className="h-8 w-40 bg-white/10 rounded animate-pulse" />
+      <div className="min-h-screen bg-[#141414]">
+        <div className="h-40 md:h-56 w-full bg-white/5 animate-pulse mt-16 md:mt-20" />
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto -mt-14 md:-mt-16 space-y-8 pb-16">
+            <div className="h-28 w-28 rounded-full bg-white/10 animate-pulse" />
             <div className="h-60 bg-white/10 rounded animate-pulse" />
           </div>
         </div>
@@ -34,82 +35,66 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    router.push("/login");
     return null;
   }
 
   return (
-    <div className="min-h-screen bg-[#141414] text-white mt-16 md:mt-24">
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-3xl mx-auto space-y-8">
-          <div>
-            <h1 className="text-3xl font-bold">Profile</h1>
-            <p className="text-white/60">Manage your account and preferences</p>
-          </div>
+    <div className="min-h-screen bg-[#141414] text-white">
+      <div className="relative">
+        <div className="relative z-0 h-56 md:h-[19rem] w-full overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-900/40 via-black to-red-900/20" />
+          <div className="absolute inset-x-0 bottom-0 h-10 md:h-14 bg-gradient-to-t from-[#141414] to-transparent" />
+        </div>
 
-          {/* Profile Update Form */}
+        <div className="relative z-10 container mx-auto px-4">
+          <div className="max-w-3xl mx-auto -mt-14 md:-mt-16 flex flex-col gap-4 pb-8 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-col items-center gap-4 sm:flex-row">
+              <Avatar className="h-28 w-28 border-4 border-[#141414] shadow-xl">
+                <AvatarImage
+                  src={
+                    user.avatarUrl ?? getAvatarUrl(user.email, user.name, 160)
+                  }
+                  alt={`${user.name || user.email}'s avatar`}
+                />
+                <AvatarFallback className="text-2xl">
+                  {getInitials(user.name, user.email)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="text-center sm:text-left sm:pb-2">
+                <h1 className="text-2xl md:text-3xl font-bold text-white">
+                  {user.name || "User"}
+                </h1>
+                <p className="text-white/60">{user.email}</p>
+              </div>
+            </div>
+
+            {/* <Button
+              variant="outline"
+              onClick={() => signOut()}
+              disabled={isSigningOut}
+              className="border-white/20 text-white hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-60 sm:mb-2"
+            >
+              {isSigningOut ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <LogOut className="h-4 w-4" />
+              )}
+              {isSigningOut ? "Signing out..." : "Log Out"}
+            </Button> */}
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 pb-16">
+        <div className="max-w-3xl mx-auto space-y-8">
           <ProfileForm user={user} />
 
-          <div className="flex items-center  gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage
-                src="https://github.com/shadcn.png"
-                alt={`${user.name || user.email}'s avatar`}
-              />
-              <AvatarFallback className="text-lg">
-                {getInitials(user.name ?? null, user.email ?? null)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="text-left">
-              <p className="font-semibold">{user.name || "User"}</p>
-              <p className="text-sm text-white/60">{user.email}</p>
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Heart className="h-5 w-5" />
-                  Favorites
-                </CardTitle>
-                <CardDescription>
-                  Your favorite movies and TV shows
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  asChild
-                  className="w-full bg-red-600  font-medium hover:bg-red-700 text-white"
-                >
-                  <Link href="/profile/likes">View Likes</Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bookmark className="h-5 w-5" />
-                  Watchlist
-                </CardTitle>
-                <CardDescription>
-                  Movies and shows to watch later
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  asChild
-                  className="w-full bg-red-600  font-medium hover:bg-red-700 text-white"
-                >
-                  <Link href="/watchlist">View Watchlist</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
           <div className="flex justify-center">
-            <Button variant="outline" asChild>
+            <Button
+              variant="ghost"
+              asChild
+              className="text-white/60 hover:bg-white/10 hover:text-white"
+            >
               <Link href="/">Back to Home</Link>
             </Button>
           </div>

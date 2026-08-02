@@ -1,38 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { CategoryCarousel } from "@/components/functional/category-carousel";
-import { getMoviesByCategory } from "@/lib/tmdb/movies";
-import type { TMDBResponse } from "@/lib/tmdb/fetcher";
+import { useMoviesByCategory } from "@/features/media/queries";
+import type { MovieCategory } from "@/features/media/types";
+
+interface CategorySectionProps {
+  title: string;
+  categoryId: MovieCategory;
+}
 
 export default function CategorySection({
   title,
   categoryId,
-}: {
-  title: string;
-  categoryId: string;
-}) {
-  const [data, setData] = useState<TMDBResponse | null>(null);
+}: CategorySectionProps) {
+  const { data } = useMoviesByCategory(categoryId);
+  const movies = data?.results ?? [];
 
-  useEffect(() => {
-    let isMounted = true;
-    getMoviesByCategory(categoryId as any, 1).then((res) => {
-      if (isMounted) setData(res);
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, [categoryId]);
-
-  if (!data) return null;
+  if (!movies.length) return null;
 
   return (
     <CategoryCarousel
       title={title}
-      movies={data.results.slice(0, 15) as any}
+      movies={movies.slice(0, 15)}
       categoryId={categoryId}
     />
   );
 }
-
-

@@ -11,7 +11,7 @@ import MobileMenu from "./mobileMenu";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
-import { useAuthContext } from "@/lib/auth-context";
+import { useAuthContext } from "@/providers/auth-provider";
 
 const MAX_CONTENT_WIDTH = "max-w-[1800px]";
 

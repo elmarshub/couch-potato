@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Metadata } from "next";
+import type { MediaDetails, Movie, Person, SearchResult } from "@/features/media/types";
 
-// Base metadata for the app
 export const baseMetadata: Metadata = {
   title: {
     default: "Couch Potato",
@@ -68,14 +67,10 @@ export const baseMetadata: Metadata = {
   },
 };
 
-// Generate movie metadata
-export function generateMovieMetadata(movie: any): Metadata {
+export function generateMovieMetadata(movie: MediaDetails): Metadata {
   const title = movie.title || movie.name || "Unknown Movie";
   const description =
-    movie.overview ||
-    `Watch ${title} and discover more about this ${
-      movie.media_type || "movie"
-    }.`;
+    movie.overview || `Watch ${title} and discover more about this movie.`;
   const releaseYear = movie.release_date
     ? new Date(movie.release_date).getFullYear()
     : "";
@@ -89,10 +84,9 @@ export function generateMovieMetadata(movie: any): Metadata {
         : description,
     keywords: [
       title,
-      movie.media_type || "movie",
-      ...(movie.genres?.map((g: any) => g.name) || []),
-      releaseYear,
       "movie",
+      ...(movie.genres?.map((g) => g.name) || []),
+      String(releaseYear),
       "film",
       "entertainment",
     ],
@@ -132,8 +126,7 @@ export function generateMovieMetadata(movie: any): Metadata {
   };
 }
 
-// Generate person metadata
-export function generatePersonMetadata(person: any): Metadata {
+export function generatePersonMetadata(person: Person): Metadata {
   const name = person.name || "Unknown Person";
   const description = person.biography
     ? person.biography.length > 160
@@ -181,10 +174,9 @@ export function generatePersonMetadata(person: any): Metadata {
   };
 }
 
-// Generate category metadata
 export function generateCategoryMetadata(
   category: string,
-  items?: any[]
+  items?: Movie[]
 ): Metadata {
   const categoryTitles: Record<string, string> = {
     trending: "Trending Movies",
@@ -234,10 +226,9 @@ export function generateCategoryMetadata(
   };
 }
 
-// Generate search metadata
 export function generateSearchMetadata(
   query: string,
-  results?: any[]
+  results?: SearchResult[]
 ): Metadata {
   const title = `Search Results for "${query}"`;
   const description = results?.length
@@ -264,7 +255,6 @@ export function generateSearchMetadata(
   };
 }
 
-// Generate profile metadata
 export function generateProfileMetadata(userName?: string): Metadata {
   const title = userName ? `${userName}'s Profile` : "Profile";
   const description =
@@ -274,7 +264,7 @@ export function generateProfileMetadata(userName?: string): Metadata {
     title,
     description,
     robots: {
-      index: false, // Don't index user profiles
+      index: false,
       follow: true,
     },
     openGraph: {
@@ -290,19 +280,29 @@ export function generateProfileMetadata(userName?: string): Metadata {
   };
 }
 
-// Generate auth page metadata
-export function generateAuthMetadata(type: "login" | "signup"): Metadata {
-  const title = type === "login" ? "Sign In" : "Sign Up";
-  const description =
-    type === "login"
-      ? "Sign in to your Couch Potato account to access your favorites and watchlist."
-      : "Create your Couch Potato account to start tracking your favorite movies and TV shows.";
+export function generateAuthMetadata(
+  type: "login" | "signup" | "forgot-password" | "reset-password"
+): Metadata {
+  const titles: Record<typeof type, string> = {
+    login: "Sign In",
+    signup: "Sign Up",
+    "forgot-password": "Forgot Password",
+    "reset-password": "Reset Password",
+  };
+  const descriptions: Record<typeof type, string> = {
+    login: "Sign in to your Couch Potato account to access your favorites and watchlist.",
+    signup: "Create your Couch Potato account to start tracking your favorite movies and TV shows.",
+    "forgot-password": "Request a password reset link for your Couch Potato account.",
+    "reset-password": "Choose a new password for your Couch Potato account.",
+  };
+  const title = titles[type];
+  const description = descriptions[type];
 
   return {
     title,
     description,
     robots: {
-      index: false, // Don't index auth pages
+      index: false,
       follow: true,
     },
     openGraph: {

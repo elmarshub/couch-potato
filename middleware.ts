@@ -1,11 +1,13 @@
-// middleware.ts
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/profile", "/watchlist"]; // app routes requiring auth
+const PROTECTED_PREFIXES = ["/profile", "/watchlist", "/library"];
+const AUTH_PREFIXES = ["/login", "/signup"];
 
-function isProtectedPath(pathname: string): boolean {
-  return PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+function matchesPrefix(pathname: string, prefixes: string[]): boolean {
+  return prefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
 }
 
 export async function middleware(request: NextRequest) {
@@ -20,8 +22,9 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          // Update request cookies and sync them onto the response with options
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) => {
             supabaseResponse.cookies.set(name, value, options);
@@ -31,22 +34,39 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const isProtectedRoute = isProtectedPath(request.nextUrl.pathname);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (isProtectedRoute) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      return NextResponse.redirect(url);
-    }
+  const { pathname } = request.nextUrl;
+
+  if (!user && matchesPrefix(pathname, PROTECTED_PREFIXES)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.search = `?redirectTo=${encodeURIComponent(pathname)}`;
+    return NextResponse.redirect(url);
+  }
+
+  if (user && matchesPrefix(pathname, AUTH_PREFIXES)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    url.search = "";
+    return NextResponse.redirect(url);
   }
 
   return supabaseResponse;
 }
 
 export const config = {
-  matcher: ["/profile/:path*", "/watchlist/:path*", "/api/:path*"],
+  matcher: [
+    "/profile/:path*",
+    "/watchlist/:path*",
+    "/library/:path*",
+    "/login",
+    "/signup",
+    "/api/favorites/:path*",
+    "/api/watchlist/:path*",
+    "/api/profile/:path*",
+    "/api/users/:path*",
+  ],
 };

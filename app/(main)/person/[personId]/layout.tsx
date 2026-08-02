@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { getPerson } from "@/lib/tmdb/person";
+import { fetchPerson } from "@/features/media/api";
 import { generatePersonMetadata } from "@/lib/metadata";
 
 type Props = {
-  params: { personId: string };
+  params: Promise<{ personId: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const personId = params.personId;
+  const { personId } = await params;
 
   try {
-    const person = await getPerson(personId);
+    const person = await fetchPerson(personId);
     return generatePersonMetadata(person);
   } catch (error) {
     console.error("Failed to fetch person metadata:", error);

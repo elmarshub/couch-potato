@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { getImageUrl } from "@/helpers/url";
-import { getYear } from "@/helpers/date";
-import { formatRating } from "@/helpers/rating";
-import { Movie } from "@/types/movie";
+import { getImageUrl } from "@/lib/format";
+import { getYear } from "@/lib/format";
+import { formatRating } from "@/lib/format";
+import { Movie } from "@/features/media/types";
 import { motion } from "framer-motion";
 
 interface MovieCardProps {

@@ -1,14 +1,10 @@
-import { getTrendingMovies, getPopularMovies } from "@/lib/tmdb/movies";
 import { MovieCarousel } from "@/components/movies/MovieCarousel";
 import CategorySection from "@/components/functional/category-section";
-import MoviesClient from "./movies-client";
+import { MediaBrowser } from "@/features/media/components/media-browser";
+import { fetchTrendingMovies, safeFetch } from "@/features/media/api";
 
 export default async function MoviesPage() {
-  // Pre-fetch data on the server
-  const [trendingMovies, popularMovies] = await Promise.all([
-    getTrendingMovies(),
-    getPopularMovies(1),
-  ]);
+  const trendingMovies = await safeFetch(() => fetchTrendingMovies());
 
   return (
     <>
@@ -20,7 +16,7 @@ export default async function MoviesPage() {
             <CategorySection title="Trending Now" categoryId="trending" />
           </div>
 
-          <MoviesClient initialMovies={popularMovies.results} />
+          <MediaBrowser type="movie" heading="Browse movies" />
         </div>
       </main>
     </>

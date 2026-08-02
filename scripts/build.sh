@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Build script for Vercel deployment
 set -e
 
 echo "🔧 Installing dependencies..."

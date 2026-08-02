@@ -1,45 +1,51 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Play, Info } from "lucide-react";
-import { useNowPlayingMovies } from "@/hooks/useMovies";
-import { getImageUrl } from "@/lib/tmdb/fetcher";
+import { getImageUrl } from "@/lib/format";
+import type { Movie } from "@/features/media/types";
 import { motion, AnimatePresence } from "framer-motion";
 
 const MAX_CONTENT_WIDTH_CLASS = "max-w-[1800px]";
 const SLIDE_DURATION = 7000;
 const PROGRESS_RESET_DELAY_MS = 80;
 
-interface Movie {
-  id: number;
-  title: string;
-  backdrop_path: string | null;
-  poster_path: string | null;
-  overview: string;
-  runtime: number;
-  vote_average: number;
-  release_date: string;
-}
-
-interface MoviesResponse {
-  results: Movie[];
-  page: number;
-  total_pages: number;
-  total_results: number;
-}
-
 interface HeroCarouselProps {
-  movies: MoviesResponse;
+  movies: Movie[];
 }
 
 export function HeroCarousel({ movies }: HeroCarouselProps) {
   const [index, setIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
 
-  const displayMovies = movies?.results?.slice(0, 8) || [];
+  const displayMovies = movies?.slice(0, 8) ?? [];
+
+  useEffect(() => {
+    let rafId: number | null = null;
+
+    function evaluate(clientX: number, clientY: number) {
+      rafId = null;
+      const el = sectionRef.current;
+      if (!el) return;
+      const topElement = document.elementFromPoint(clientX, clientY);
+      setIsPaused(Boolean(topElement && el.contains(topElement)));
+    }
+
+    function handlePointerMove(e: PointerEvent) {
+      if (rafId !== null) return;
+      const { clientX, clientY } = e;
+      rafId = requestAnimationFrame(() => evaluate(clientX, clientY));
+    }
+
+    window.addEventListener("pointermove", handlePointerMove);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
+  }, []);
 
   useEffect(() => {
     if (!displayMovies.length || isPaused) return;
@@ -51,15 +57,12 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
     return () => clearInterval(interval);
   }, [displayMovies.length, isPaused]);
 
-  // Progress bar animation (robust reset between slides)
   useEffect(() => {
     const progressElement = document.getElementById(`progress-${index}`);
     if (!progressElement || isPaused) return;
 
-    // Reset animation
     progressElement.style.width = "0%";
 
-    // Small delay to ensure reset is applied and layout has updated
     const timeout = setTimeout(() => {
       progressElement.style.transition = `width ${SLIDE_DURATION}ms linear`;
       progressElement.style.width = "100%";
@@ -93,19 +96,17 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
 
   return (
     <motion.section
+      ref={sectionRef}
       className="relative w-full h-[60vh] sm:h-[70vh] md:h-[76vh] lg:h-[80vh] xl:h-[85vh] overflow-hidden"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Movie Slides */}
       <AnimatePresence mode="wait">
         {displayMovies.map((movie, i) => {
           const images = getImageUrl(
             movie.backdrop_path || movie.poster_path,
-            "original"
+            "original",
           );
 
           return (
@@ -129,7 +130,6 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
                 className="object-cover object-center sm:object-top"
               />
 
-              {/* Enhanced gradient overlays for better text readability */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/70 to-transparent" />
               <div className="absolute inset-0 bg-gradient-to-r from-[#141414]/90 via-[#141414]/40 to-transparent" />
             </motion.div>
@@ -137,7 +137,6 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
         })}
       </AnimatePresence>
 
-      {/* Content Overlay */}
       <div
         className={`absolute inset-0 z-20 mx-auto ${MAX_CONTENT_WIDTH_CLASS} w-full`}
       >
@@ -148,7 +147,6 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
           transition={{ delay: 0.3, duration: 0.5 }}
         >
           <div className="max-w-2xl space-y-3 sm:space-y-4">
-            {/* Featured badge */}
             <motion.div
               className="flex items-center gap-2"
               initial={{ opacity: 0, x: -20 }}
@@ -163,7 +161,6 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
               </span>
             </motion.div>
 
-            {/* Title */}
             <motion.h1
               className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-white drop-shadow-2xl leading-tight"
               initial={{ opacity: 0, y: 20 }}
@@ -173,7 +170,6 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
               {currentMovie.title}
             </motion.h1>
 
-            {/* Movie Info */}
             <motion.div
               className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm md:text-base flex-wrap"
               initial={{ opacity: 0, y: 20 }}
@@ -192,7 +188,6 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
               </span>
             </motion.div>
 
-            {/* Overview */}
             <motion.p
               className="text-gray-200 text-sm sm:text-base md:text-lg line-clamp-2 sm:line-clamp-3 leading-relaxed max-w-xl drop-shadow-lg"
               initial={{ opacity: 0, y: 20 }}
@@ -202,7 +197,6 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
               {currentMovie.overview}
             </motion.p>
 
-            {/* Action Buttons */}
             <motion.div
               className="flex flex-wrap gap-2 sm:gap-3 pt-2 mb-12 sm:mb-10"
               initial={{ opacity: 0, y: 20 }}
@@ -235,7 +229,6 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
         </motion.div>
       </div>
 
-      {/* Carousel Controls - Bottom Right */}
       <motion.div
         className="absolute bottom-8 right-10 md:right-8 z-30 flex items-center gap-3"
         initial={{ opacity: 0, y: 20 }}
@@ -249,8 +242,6 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
               onClick={() => goToSlide(i)}
               className="relative h-1 w-8 bg-gray-600/50 hover:bg-gray-400/50 transition-colors overflow-hidden rounded-full cursor-pointer"
               aria-label={`Go to slide ${i + 1}`}
-              // whileHover={{ scale: 1.1 }}
-              // whileTap={{ scale: 0.95 }}
             >
               {i === index && (
                 <motion.div
@@ -259,10 +250,6 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
                   style={{ width: "0%", transition: "none" }}
                   initial={{ width: "0%" }}
                   animate={{ width: "100%" }}
-                  // transition={{
-                  //   duration: SLIDE_DURATION / 1000,
-                  //   ease: "linear",
-                  // }}
                 />
               )}
             </motion.button>

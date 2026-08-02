@@ -1,59 +1,33 @@
-// app/api/users/create/route.ts
-import { prisma } from "@/lib/prisma";
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import type { User as PrismaUser } from "@prisma/client";
+import { getCurrentUser } from "@/lib/supabase/auth";
+import {
+  extractBearerToken,
+  forbiddenOriginResponse,
+  isSameOrigin,
+  rateLimit,
+  rateLimitResponse,
+  serverErrorResponse,
+} from "@/lib/api/guards";
 
-export async function POST(req: Request) {
+export const runtime = "nodejs";
+
+export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
+    if (!isSameOrigin(request)) return forbiddenOriginResponse();
 
-    const authHeader = req.headers.get("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
-
-    const {
-      data: { user: authUser },
-      error,
-    } = await supabase.auth.getUser(token);
-
-    if (error || !authUser) {
+    const user = await getCurrentUser(extractBearerToken(request));
+    if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // Ensure email exists
-    if (!authUser.email) {
-      return NextResponse.json({ error: "Email missing" }, { status: 400 });
-    }
-
-    // Prepare update fields
-    const updates = {
-      email: authUser.email,
-      ...(authUser.user_metadata?.name && {
-        name: authUser.user_metadata.name,
-      }),
-      ...(authUser.user_metadata?.avatar_url && {
-        avatarUrl: authUser.user_metadata.avatar_url,
-      }),
-    };
-
-    // Insert or update user in DB
-    const user = await prisma.user.upsert({
-      where: { id: authUser.id },
-      update: updates,
-      create: {
-        id: authUser.id,
-        email: authUser.email,
-        name: authUser.user_metadata?.name || null,
-        avatarUrl: authUser.user_metadata?.avatar_url || null,
-      },
+    const { allowed, retryAfterSeconds } = rateLimit(`users:create:${user.id}`, {
+      limit: 10,
+      windowMs: 60_000,
     });
+    if (!allowed) return rateLimitResponse(retryAfterSeconds);
 
-    return NextResponse.json<{ user: PrismaUser }>({ user });
-  } catch (err) {
-    console.error("Error creating user:", err);
-    return NextResponse.json(
-      { error: "Failed to create user" },
-      { status: 500 }
-    );
+    return NextResponse.json({ user });
+  } catch (error) {
+    return serverErrorResponse("Error creating user", error);
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Movie } from "@/types/movie";
+import { Movie } from "@/features/media/types";
 
 interface MovieCarouselControlsProps {
   movies: Movie[];
@@ -14,15 +14,12 @@ export function MovieCarouselControls({
   currentIndex,
   onSlideChange,
 }: MovieCarouselControlsProps) {
-  // Progress bar animation
   useEffect(() => {
     const progressElement = document.getElementById(`progress-${currentIndex}`);
     if (!progressElement) return;
 
-    // Reset animation
     progressElement.style.width = "0%";
 
-    // Small delay to ensure reset is applied
     const timeout = setTimeout(() => {
       progressElement.style.transition = `width 7000ms linear`;
       progressElement.style.width = "100%";

@@ -5,8 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Movie } from "@/lib/tmdb/movies";
-import { getImageUrl, getYear } from "@/lib/tmdb/fetcher";
+import type { Movie } from "@/features/media/types";
+import { getImageUrl, getYear } from "@/lib/format";
 import { motion } from "framer-motion";
 
 interface CategoryCarouselProps {
@@ -37,7 +37,6 @@ export function CategoryCarousel({
       behavior: "smooth",
     });
 
-    // Update arrow visibility
     setTimeout(() => {
       if (!scrollContainerRef.current) return;
       setShowLeftArrow(scrollContainerRef.current.scrollLeft > 0);
@@ -59,7 +58,6 @@ export function CategoryCarousel({
       viewport={{ once: true }}
     >
       <div className="container mx-auto px-4">
-        {/* Section Header */}
         <motion.div
           className="flex items-center justify-between mb-4 sm:mb-6"
           initial={{ opacity: 0, y: -10 }}
@@ -84,7 +82,6 @@ export function CategoryCarousel({
           </Link>
         </motion.div>
 
-        {/* Carousel */}
         <motion.div
           className="relative group"
           initial={{ opacity: 0 }}
@@ -92,7 +89,6 @@ export function CategoryCarousel({
           transition={{ duration: 0.5, delay: 0.2 }}
           viewport={{ once: true }}
         >
-          {/* Left Arrow */}
           {showLeftArrow && (
             <motion.button
               onClick={() => scroll("left")}
@@ -107,7 +103,6 @@ export function CategoryCarousel({
             </motion.button>
           )}
 
-          {/* Movies Container */}
           <div
             ref={scrollContainerRef}
             className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
@@ -135,7 +130,6 @@ export function CategoryCarousel({
                       className="object-cover group-hover/card:scale-105 transition-transform duration-300"
                       sizes="(max-width: 640px) 140px, (max-width: 768px) 160px, (max-width: 1024px) 180px, 200px"
                     />
-                    {/* Hover Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300">
                       <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4">
                         <h3 className="text-white font-semibold text-xs sm:text-sm line-clamp-2 mb-1">
@@ -154,7 +148,6 @@ export function CategoryCarousel({
             ))}
           </div>
 
-          {/* Right Arrow */}
           {showRightArrow && (
             <motion.button
               onClick={() => scroll("right")}

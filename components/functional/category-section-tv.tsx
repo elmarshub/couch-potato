@@ -1,26 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { TvCarousel } from "@/components/tv/TvCarousel";
-import { getPopularTVShows } from "@/lib/tmdb/tv";
-import type { TMDBResponse } from "@/lib/tmdb/fetcher";
+import { usePopularTVShows } from "@/features/media/queries";
 
 export default function CategorySectionTV({ title }: { title: string }) {
-  const [data, setData] = useState<TMDBResponse | null>(null);
+  const { data } = usePopularTVShows();
+  const shows = data?.results ?? [];
 
-  useEffect(() => {
-    let isMounted = true;
-    getPopularTVShows(1).then((res) => {
-      if (isMounted) setData(res);
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  if (!shows.length) return null;
 
-  if (!data) return null;
-
-  return <TvCarousel tvshows={data as any} />;
+  return (
+    <section>
+      <h2 className="mb-4 text-lg font-semibold text-white sm:text-xl md:text-2xl">
+        {title}
+      </h2>
+      <TvCarousel tvshows={shows} />
+    </section>
+  );
 }
-
-

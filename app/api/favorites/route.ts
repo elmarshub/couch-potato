@@ -1,157 +1,118 @@
-// app/api/favorites/route.ts (Enhanced version with better error handling)
+import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/supabase/auth";
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import {
+  extractBearerToken,
+  forbiddenOriginResponse,
+  isSameOrigin,
+  rateLimit,
+  rateLimitResponse,
+  readJsonBody,
+  serverErrorResponse,
+} from "@/lib/api/guards";
+import { formatZodError, mediaItemSchema } from "@/lib/api/validation";
 
-// GET all favorites for current user
+export const runtime = "nodejs";
+
+const READ_LIMIT = { limit: 60, windowMs: 60_000 };
+const WRITE_LIMIT = { limit: 30, windowMs: 60_000 };
+
+const unauthorized = () =>
+  NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
-    const user = await getCurrentUser(token);
+    const user = await getCurrentUser(extractBearerToken(request));
+    if (!user) return unauthorized();
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { allowed, retryAfterSeconds } = rateLimit(
+      `favorites:get:${user.id}`,
+      READ_LIMIT
+    );
+    if (!allowed) return rateLimitResponse(retryAfterSeconds);
 
     const favorites = await prisma.favorite.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
+      take: 500,
     });
 
-    return NextResponse.json(favorites);
+    return NextResponse.json(favorites, {
+      headers: { "Cache-Control": "private, no-store" },
+    });
   } catch (error) {
-    console.error("Error fetching favorites:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch favorites" },
-      { status: 500 }
-    );
+    return serverErrorResponse("Error fetching favorites", error);
   }
 }
 
-// POST add to favorites
 export async function POST(request: Request) {
   try {
-    const authHeader = request.headers.get("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
-    const user = await getCurrentUser(token);
+    if (!isSameOrigin(request)) return forbiddenOriginResponse();
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const user = await getCurrentUser(extractBearerToken(request));
+    if (!user) return unauthorized();
 
-    const body = await request.json();
-    const { mediaType, mediaId } = body;
-
-    console.log("Adding to favorites:", {
-      userId: user.id,
-      mediaType,
-      mediaId,
-    });
-
-    // Validate mediaType
-    if (!mediaType || (mediaType !== "movie" && mediaType !== "tv")) {
-      return NextResponse.json(
-        { error: "Invalid mediaType. Must be 'movie' or 'tv'" },
-        { status: 400 }
-      );
-    }
-
-    // Convert mediaId to number
-    const mediaIdNumber =
-      typeof mediaId === "number" ? mediaId : parseInt(mediaId, 10);
-
-    if (isNaN(mediaIdNumber)) {
-      return NextResponse.json(
-        { error: "Invalid mediaId. Must be a number" },
-        { status: 400 }
-      );
-    }
-
-    // Check if already favorited
-    const existing = await prisma.favorite.findUnique({
-      where: {
-        userId_mediaType_mediaId: {
-          userId: user.id,
-          mediaType,
-          mediaId: mediaIdNumber,
-        },
-      },
-    });
-
-    if (existing) {
-      console.log("Already in favorites:", existing);
-      return NextResponse.json(
-        { error: "Already in favorites" },
-        { status: 400 }
-      );
-    }
-
-    const favorite = await prisma.favorite.create({
-      data: {
-        userId: user.id,
-        mediaType,
-        mediaId: mediaIdNumber,
-      },
-    });
-
-    console.log("Favorite created:", favorite);
-    return NextResponse.json(favorite);
-  } catch (error) {
-    console.error("Error adding to favorites:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to add to favorites",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
+    const { allowed, retryAfterSeconds } = rateLimit(
+      `favorites:write:${user.id}`,
+      WRITE_LIMIT
     );
+    if (!allowed) return rateLimitResponse(retryAfterSeconds);
+
+    const parsed = mediaItemSchema.safeParse(await readJsonBody(request));
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: formatZodError(parsed.error) },
+        { status: 400 }
+      );
+    }
+    const { mediaType, mediaId } = parsed.data;
+
+    const favorite = await prisma.favorite.upsert({
+      where: {
+        userId_mediaType_mediaId: { userId: user.id, mediaType, mediaId },
+      },
+      update: {},
+      create: { userId: user.id, mediaType, mediaId },
+    });
+
+    return NextResponse.json(favorite, { status: 201 });
+  } catch (error) {
+    return serverErrorResponse("Error adding to favorites", error);
   }
 }
 
-// DELETE remove from favorites
 export async function DELETE(request: Request) {
   try {
-    const authHeader = request.headers.get("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
-    const user = await getCurrentUser(token);
+    if (!isSameOrigin(request)) return forbiddenOriginResponse();
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const user = await getCurrentUser(extractBearerToken(request));
+    if (!user) return unauthorized();
+
+    const { allowed, retryAfterSeconds } = rateLimit(
+      `favorites:write:${user.id}`,
+      WRITE_LIMIT
+    );
+    if (!allowed) return rateLimitResponse(retryAfterSeconds);
 
     const { searchParams } = new URL(request.url);
-    const mediaType = searchParams.get("mediaType");
-    const mediaId = searchParams.get("mediaId");
-
-    console.log("Removing from favorites:", {
-      userId: user.id,
-      mediaType,
-      mediaId,
+    const parsed = mediaItemSchema.safeParse({
+      mediaType: searchParams.get("mediaType"),
+      mediaId: searchParams.get("mediaId"),
     });
-
-    if (!mediaType || !mediaId) {
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Missing parameters: mediaType and mediaId are required" },
+        { error: formatZodError(parsed.error) },
         { status: 400 }
       );
     }
+    const { mediaType, mediaId } = parsed.data;
 
     const result = await prisma.favorite.deleteMany({
-      where: {
-        userId: user.id,
-        mediaType,
-        mediaId: parseInt(mediaId),
-      },
+      where: { userId: user.id, mediaType, mediaId },
     });
 
-    console.log("Delete result:", result);
     return NextResponse.json({ success: true, deleted: result.count });
   } catch (error) {
-    console.error("Error removing from favorites:", error);
-    return NextResponse.json(
-      { error: "Failed to remove from favorites" },
-      { status: 500 }
-    );
+    return serverErrorResponse("Error removing from favorites", error);
   }
 }

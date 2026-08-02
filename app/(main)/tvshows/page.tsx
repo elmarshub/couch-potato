@@ -1,13 +1,9 @@
-import { getTrendingTVShows, getPopularTVShows } from "@/lib/tmdb/tv";
 import { TvCarousel } from "@/components/tv/TvCarousel";
-import TvShowsClient from "./tvshows-client";
+import { MediaBrowser } from "@/features/media/components/media-browser";
+import { fetchTrendingTVShows, safeFetch } from "@/features/media/api";
 
-export default async function TvshowPage() {
-  // Pre-fetch data on the server
-  const [trendingTVShows, popularTVShows] = await Promise.all([
-    getTrendingTVShows(),
-    getPopularTVShows(1),
-  ]);
+export default async function TvShowsPage() {
+  const trendingTVShows = await safeFetch(() => fetchTrendingTVShows());
 
   return (
     <>
@@ -15,7 +11,7 @@ export default async function TvshowPage() {
 
       <main className="min-h-screen bg-[#141414] py-8">
         <div className="container mx-auto px-4">
-          <TvShowsClient initialTVShows={popularTVShows.results} />
+          <MediaBrowser type="tv" heading="Browse TV shows" />
         </div>
       </main>
     </>

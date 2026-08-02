@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { TvCarouselSlide } from "./TvCarouselSlide";
 import { TvCarouselControls } from "./TvCarouselControls";
 import { TvCarouselContent } from "./TvCarouselContent";
-import { TVShow } from "@/types/tv";
+import { TVShow } from "@/features/media/types";
 
 interface TvCarouselProps {
   tvshows: TVShow[];

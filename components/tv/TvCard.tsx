@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { getImageUrl } from "@/helpers/url";
-import { getYear } from "@/helpers/date";
-import { formatRating } from "@/helpers/rating";
-import { TVShow } from "@/types/tv";
+import { getImageUrl } from "@/lib/format";
+import { getYear } from "@/lib/format";
+import { formatRating } from "@/lib/format";
+import { TVShow } from "@/features/media/types";
 
 interface TvCardProps {
   show: TVShow;
@@ -22,15 +22,13 @@ export function TvCard({ show, showRanking = false, ranking }: TvCardProps) {
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        
-        {/* Ranking Badge */}
+
         {showRanking && ranking && (
           <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
             #{ranking}
           </div>
         )}
-        
-        {/* Hover Overlay */}
+
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
           <div className="absolute bottom-0 left-0 right-0 p-3">
             <h3 className="text-white font-semibold text-sm line-clamp-2 mb-2">

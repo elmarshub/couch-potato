@@ -1,17 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Metadata } from "next";
-import { getMoviesByCategory } from "@/lib/tmdb/movies";
+import { fetchMoviesByCategory } from "@/features/media/api";
+import type { MovieCategory } from "@/features/media/types";
 import { generateCategoryMetadata } from "@/lib/metadata";
 
 type Props = {
-  params: { categoryId: string };
+  params: Promise<{ categoryId: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const categoryId = params.categoryId;
+  const { categoryId } = await params;
 
   try {
-    const data = await getMoviesByCategory(categoryId as any, 1);
+    const data = await fetchMoviesByCategory(categoryId as MovieCategory, 1);
     return generateCategoryMetadata(categoryId, data.results);
   } catch (error) {
     console.error("Failed to fetch category metadata:", error);

@@ -1,45 +1,22 @@
-// app/api/users/me/route.ts
-import { prisma } from "@/lib/prisma";
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/supabase/auth";
+import { extractBearerToken, serverErrorResponse } from "@/lib/api/guards";
 
-export async function GET(req: Request) {
-  const supabase = await createClient();
+export const runtime = "nodejs";
 
-  // 🔹 Check for Authorization header (client-side requests)
-  const authHeader = req.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
-
-  const {
-    data: { user: authUser },
-    error,
-  } = await supabase.auth.getUser(token);
-
-  if (error || !authUser) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
-
+export async function GET(request: Request) {
   try {
-    // 🔹 Fetch user from DB
-    const user = await prisma.user.findUnique({
-      where: { id: authUser.id },
-    });
+    const user = await getCurrentUser(extractBearerToken(request));
 
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found in DB" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    return NextResponse.json({ user });
-  } catch (err: any) {
-    if (err?.message === "DB_UNAVAILABLE") {
-      return NextResponse.json(
-        { error: "Database unavailable" },
-        { status: 503 }
-      );
-    }
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { user },
+      { headers: { "Cache-Control": "private, no-store" } }
+    );
+  } catch (error) {
+    return serverErrorResponse("Error loading current user", error);
   }
 }

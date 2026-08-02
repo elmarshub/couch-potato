@@ -1,22 +1,16 @@
 import type { Metadata } from "next";
-import { getMediaDetails } from "@/lib/tmdb/search";
+import { fetchMediaDetails } from "@/features/media/api";
 import { generateMovieMetadata } from "@/lib/metadata";
 
 type Props = {
   params: Promise<{ movieId: string }>;
-  searchParams: Promise<{ type?: string }>;
 };
 
-export async function generateMetadata({
-  params,
-  searchParams,
-}: Props): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { movieId } = await params;
-  const resolvedSearchParams = await searchParams;
-  const type = (resolvedSearchParams?.type ?? "movie") as "movie" | "tv";
 
   try {
-    const movie = await getMediaDetails(type, movieId);
+    const movie = await fetchMediaDetails("movie", movieId);
     return generateMovieMetadata(movie);
   } catch (error) {
     console.error("Failed to fetch movie metadata:", error);

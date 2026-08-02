@@ -1,6 +1,6 @@
 import Image from "next/image";
-import { getImageUrl } from "@/helpers/url";
-import { Movie } from "@/types/movie";
+import { getImageUrl } from "@/lib/format";
+import { Movie } from "@/features/media/types";
 
 interface MovieCarouselSlideProps {
   movies: Movie[];
@@ -34,7 +34,6 @@ export function MovieCarouselSlide({
               className="object-cover object-top"
             />
 
-            {/* Enhanced gradient overlays for better text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/70 to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#141414]/90 via-[#141414]/40 to-transparent" />
           </div>

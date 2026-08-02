@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { TVShow } from "@/types/tv";
+import { TVShow } from "@/features/media/types";
 
 interface TvCarouselControlsProps {
   shows: TVShow[];
@@ -14,7 +14,6 @@ export function TvCarouselControls({
   currentIndex,
   onSlideChange,
 }: TvCarouselControlsProps) {
-  // Progress bar animation
   useEffect(() => {
     const progressElement = document.getElementById(`progress-${currentIndex}`);
     if (!progressElement) return;

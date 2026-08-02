@@ -2,14 +2,16 @@
 
 import { useEffect, useRef } from "react";
 import { InfiniteMovieGrid } from "@/components/functional/infinite-movie-grid";
-import { useInfiniteMoviesByCategory } from "@/hooks/useInfiniteMovies";
-import { useInfinitePopularTv } from "@/hooks/useInfiniteTvshows";
+import { useInfiniteMoviesByCategory } from "@/features/media/queries";
+import { useInfinitePopularTVShows } from "@/features/media/queries";
 import Image from "next/image";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getImageUrl } from "@/lib/tmdb/fetcher";
+import { getImageUrl } from "@/lib/format";
 import { motion } from "framer-motion";
+import type { Movie } from "@/features/media/types";
+import type { TVShow } from "@/features/media/types";
 
 function useAutoLoadMore(ref: React.RefObject<HTMLDivElement | null>, onLoad?: () => void) {
   useEffect(() => {
@@ -27,7 +29,7 @@ function useAutoLoadMore(ref: React.RefObject<HTMLDivElement | null>, onLoad?: (
 
 export default function HomeInfiniteFeed() {
   const moviesQuery = useInfiniteMoviesByCategory("popular");
-  const tvQuery = useInfinitePopularTv();
+  const tvQuery = useInfinitePopularTVShows();
 
   const movies = (moviesQuery.data?.pages.flatMap((p) => p.results) ?? []).slice(0, 60);
   const tvshows = (tvQuery.data?.pages.flatMap((p) => p.results) ?? []).slice(0, 60);
@@ -56,7 +58,6 @@ export default function HomeInfiniteFeed() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Infinite Movies */}
       <motion.section
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -65,7 +66,7 @@ export default function HomeInfiniteFeed() {
       >
         <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-4 text-white">More Popular Movies</h2>
         <InfiniteMovieGrid
-          movies={movies as any}
+          movies={movies as Movie[]}
           isLoading={moviesQuery.isLoading}
           hasNextPage={!!moviesQuery.hasNextPage && movies.length < 60}
           isFetchingNextPage={moviesQuery.isFetchingNextPage}
@@ -78,7 +79,6 @@ export default function HomeInfiniteFeed() {
         <div ref={moviesSentinelRef} className="h-6" />
       </motion.section>
 
-      {/* Infinite TV Shows */}
       <motion.section
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -93,7 +93,7 @@ export default function HomeInfiniteFeed() {
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-              {tvshows.map((show: any, index: number) => (
+              {(tvshows as TVShow[]).map((show, index) => (
                 <motion.div
                   key={show.id}
                   initial={{ opacity: 0, y: 20 }}

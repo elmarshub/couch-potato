@@ -38,11 +38,9 @@ const NavbarLinks = ({ pathname }: NavbarLinksProps) => {
           >
             {link.icon}
             {link.name}
-            {/* Active indicator */}
             {pathname === link.href && (
               <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-red-600 rounded-full" />
             )}
-            {/* Hover effect */}
             <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-white/50 rounded-full scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
           </Link>
         </li>

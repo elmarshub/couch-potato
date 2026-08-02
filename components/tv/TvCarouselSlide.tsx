@@ -1,6 +1,6 @@
 import Image from "next/image";
-import { getImageUrl } from "@/helpers/url";
-import { TVShow } from "@/types/tv";
+import { getImageUrl } from "@/lib/format";
+import { TVShow } from "@/features/media/types";
 
 interface TvCarouselSlideProps {
   shows: TVShow[];
@@ -31,7 +31,6 @@ export function TvCarouselSlide({ shows, currentIndex }: TvCarouselSlideProps) {
               className="object-cover object-top"
             />
 
-            {/* Gradients */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/70 to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#141414]/90 via-[#141414]/40 to-transparent" />
           </div>

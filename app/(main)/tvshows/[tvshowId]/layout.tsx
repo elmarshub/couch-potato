@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { getMediaDetails } from "@/lib/tmdb/search";
+import { fetchMediaDetails } from "@/features/media/api";
 import { generateMovieMetadata } from "@/lib/metadata";
 
 type Props = {
-  params: { tvshowId: string };
+  params: Promise<{ tvshowId: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const tvshowId = params.tvshowId;
+  const { tvshowId } = await params;
 
   try {
-    const tvshow = await getMediaDetails("tv", tvshowId);
+    const tvshow = await fetchMediaDetails("tv", tvshowId);
     return generateMovieMetadata(tvshow);
   } catch (error) {
     console.error("Failed to fetch TV show metadata:", error);

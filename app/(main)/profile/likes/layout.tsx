@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description: "Your favorite movies and TV shows on Couch Potato. Keep track of the content you love most.",
   keywords: ["favorites", "likes", "movies", "TV shows", "personal list", "favorite content"],
   robots: {
-    index: false, // Don't index user favorites
+    index: false,
     follow: true,
   },
   openGraph: {
