@@ -14,6 +14,23 @@ import type {
   VideoListResponse,
 } from "./types";
 
+const EMPTY_PAGINATED = {
+  page: 1,
+  results: [],
+  total_pages: 0,
+  total_results: 0,
+} as const;
+
+export async function safeFetch<T>(
+  fetcher: () => Promise<PaginatedResponse<T>>
+): Promise<PaginatedResponse<T>> {
+  try {
+    return await fetcher();
+  } catch {
+    return { ...EMPTY_PAGINATED, results: [] as T[] };
+  }
+}
+
 const CATEGORY_GENRE_IDS: Partial<Record<MovieCategory, number>> = {
   action: 28,
   comedy: 35,

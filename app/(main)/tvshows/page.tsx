@@ -1,9 +1,9 @@
 import { TvCarousel } from "@/components/tv/TvCarousel";
 import { MediaBrowser } from "@/features/media/components/media-browser";
-import { fetchTrendingTVShows } from "@/features/media/api";
+import { fetchTrendingTVShows, safeFetch } from "@/features/media/api";
 
 export default async function TvShowsPage() {
-  const trendingTVShows = await fetchTrendingTVShows();
+  const trendingTVShows = await safeFetch(() => fetchTrendingTVShows());
 
   return (
     <>

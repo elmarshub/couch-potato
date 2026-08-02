@@ -4,6 +4,7 @@ import { HeroCarousel } from "@/components/main/herocarousel";
 import {
   fetchMoviesByCategory,
   fetchNowPlayingMovies,
+  safeFetch,
 } from "@/features/media/api";
 import HomeInfiniteFeed from "@/components/functional/home-infinite-feed";
 
@@ -35,17 +36,17 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const nowPlaying = await fetchNowPlayingMovies();
+  const nowPlaying = await safeFetch(() => fetchNowPlayingMovies());
 
   const [trending, hollywood, popular, topRated, action, horror, animation] =
     await Promise.all([
-      fetchMoviesByCategory("trending"),
-      fetchMoviesByCategory("hollywood"),
-      fetchMoviesByCategory("popular"),
-      fetchMoviesByCategory("top-rated"),
-      fetchMoviesByCategory("action"),
-      fetchMoviesByCategory("horror"),
-      fetchMoviesByCategory("animation"),
+      safeFetch(() => fetchMoviesByCategory("trending")),
+      safeFetch(() => fetchMoviesByCategory("hollywood")),
+      safeFetch(() => fetchMoviesByCategory("popular")),
+      safeFetch(() => fetchMoviesByCategory("top-rated")),
+      safeFetch(() => fetchMoviesByCategory("action")),
+      safeFetch(() => fetchMoviesByCategory("horror")),
+      safeFetch(() => fetchMoviesByCategory("animation")),
     ]);
 
   return (

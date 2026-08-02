@@ -1,10 +1,10 @@
 import { MovieCarousel } from "@/components/movies/MovieCarousel";
 import CategorySection from "@/components/functional/category-section";
 import { MediaBrowser } from "@/features/media/components/media-browser";
-import { fetchTrendingMovies } from "@/features/media/api";
+import { fetchTrendingMovies, safeFetch } from "@/features/media/api";
 
 export default async function MoviesPage() {
-  const trendingMovies = await fetchTrendingMovies();
+  const trendingMovies = await safeFetch(() => fetchTrendingMovies());
 
   return (
     <>
