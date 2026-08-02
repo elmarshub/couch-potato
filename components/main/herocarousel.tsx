@@ -54,15 +54,27 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
 
     let startX = 0;
     let startY = 0;
+    let activeTouchId: number | null = null;
 
     function handleTouchStart(e: TouchEvent) {
+      if (e.touches.length > 1) {
+        activeTouchId = null;
+        return;
+      }
       const touch = e.touches[0];
+      activeTouchId = touch.identifier;
       startX = touch.clientX;
       startY = touch.clientY;
     }
 
     function handleTouchEnd(e: TouchEvent) {
-      const touch = e.changedTouches[0];
+      if (activeTouchId === null) return;
+      const touch = Array.from(e.changedTouches).find(
+        (t) => t.identifier === activeTouchId
+      );
+      activeTouchId = null;
+      if (!touch) return;
+
       const deltaX = touch.clientX - startX;
       const deltaY = touch.clientY - startY;
 
@@ -79,11 +91,17 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
       });
     }
 
+    function handleTouchCancel() {
+      activeTouchId = null;
+    }
+
     el.addEventListener("touchstart", handleTouchStart, { passive: true });
     el.addEventListener("touchend", handleTouchEnd, { passive: true });
+    el.addEventListener("touchcancel", handleTouchCancel, { passive: true });
     return () => {
       el.removeEventListener("touchstart", handleTouchStart);
       el.removeEventListener("touchend", handleTouchEnd);
+      el.removeEventListener("touchcancel", handleTouchCancel);
     };
   }, [displayMovies.length]);
 
