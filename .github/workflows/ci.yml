@@ -14,13 +14,11 @@ jobs:
       NEXT_PUBLIC_SUPABASE_ANON_KEY: "ci-placeholder-anon-key"
       TMDB_API_READ_ACCESS_TOKEN: "ci-placeholder-token"
       NEXT_PUBLIC_TMDB_IMAGE_BASE: "https://image.tmdb.org/t/p"
-      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+      NEXT_PUBLIC_APP_URL: "https://couchpotato.vercel.app/"
     steps:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - uses: actions/setup-node@v4
         with:

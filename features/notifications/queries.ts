@@ -32,11 +32,39 @@ export function useUnreadCountQuery() {
   });
 }
 
+interface NotificationsSnapshot {
+  list?: Notification[];
+  unreadCount?: { count: number };
+}
+
+async function snapshotNotifications(
+  queryClient: ReturnType<typeof useQueryClient>
+): Promise<NotificationsSnapshot> {
+  await queryClient.cancelQueries({ queryKey: queryKeys.notifications.all });
+  return {
+    list: queryClient.getQueryData<Notification[]>(queryKeys.notifications.list()),
+    unreadCount: queryClient.getQueryData<{ count: number }>(
+      queryKeys.notifications.unreadCount()
+    ),
+  };
+}
+
+function restoreNotifications(
+  queryClient: ReturnType<typeof useQueryClient>,
+  snapshot: NotificationsSnapshot | undefined
+) {
+  if (!snapshot) return;
+  queryClient.setQueryData(queryKeys.notifications.list(), snapshot.list);
+  queryClient.setQueryData(queryKeys.notifications.unreadCount(), snapshot.unreadCount);
+}
+
 export function useMarkNotificationReadMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => markNotificationRead(id),
     onMutate: async (id: string) => {
+      const snapshot = await snapshotNotifications(queryClient);
+
       queryClient.setQueryData<Notification[]>(
         queryKeys.notifications.list(),
         (prev) =>
@@ -47,6 +75,11 @@ export function useMarkNotificationReadMutation() {
         (prev) =>
           prev ? { count: Math.max(0, prev.count - 1) } : prev
       );
+
+      return snapshot;
+    },
+    onError: (_err, _id, snapshot) => {
+      restoreNotifications(queryClient, snapshot);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
@@ -59,6 +92,8 @@ export function useMarkAllNotificationsReadMutation() {
   return useMutation({
     mutationFn: markAllNotificationsRead,
     onMutate: async () => {
+      const snapshot = await snapshotNotifications(queryClient);
+
       queryClient.setQueryData<Notification[]>(
         queryKeys.notifications.list(),
         (prev) => prev?.map((n) => ({ ...n, isRead: true }))
@@ -66,6 +101,11 @@ export function useMarkAllNotificationsReadMutation() {
       queryClient.setQueryData(queryKeys.notifications.unreadCount(), {
         count: 0,
       });
+
+      return snapshot;
+    },
+    onError: (_err, _vars, snapshot) => {
+      restoreNotifications(queryClient, snapshot);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });

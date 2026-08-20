@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { fetchMediaDetails } from "@/features/media/api";
+import { mapWithConcurrency } from "@/lib/concurrency";
 import { ShowsTable, type ShowRow } from "@/features/admin/components/shows-table";
+
+const TMDB_FETCH_CONCURRENCY = 8;
 
 export default async function AdminShowsPage() {
   const showtimes = await prisma.showtime.findMany({
@@ -12,17 +15,23 @@ export default async function AdminShowsPage() {
         select: { amountCents: true },
       },
     },
+    take: 300,
   });
 
-  const movies = await Promise.all(
-    showtimes.map((s) =>
-      fetchMediaDetails("movie", s.tmdbMovieId).catch(() => null)
-    )
+  const uniqueMovieIds = Array.from(
+    new Set(showtimes.map((s) => s.tmdbMovieId))
   );
+  const movieEntries = await mapWithConcurrency(
+    uniqueMovieIds,
+    TMDB_FETCH_CONCURRENCY,
+    async (id) => [id, await fetchMediaDetails("movie", id).catch(() => null)] as const
+  );
+  const movieById = new Map(movieEntries);
 
-  const rows: ShowRow[] = showtimes.map((showtime, i) => ({
+  const rows: ShowRow[] = showtimes.map((showtime) => ({
     id: showtime.id,
-    movieTitle: movies[i]?.title ?? `TMDB #${showtime.tmdbMovieId}`,
+    movieTitle:
+      movieById.get(showtime.tmdbMovieId)?.title ?? `TMDB #${showtime.tmdbMovieId}`,
     startsAt: showtime.startsAt.toISOString(),
     totalBookings: showtime.bookings.length,
     earningsCents: showtime.bookings.reduce((sum, b) => sum + b.amountCents, 0),

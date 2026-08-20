@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { fetchMediaDetails } from "@/features/media/api";
 import { ShowtimeList } from "@/features/booking/components/showtime-list";
@@ -13,6 +14,7 @@ interface Props {
 export default async function BookMoviePage({ params }: Props) {
   const { movieId } = await params;
   const tmdbMovieId = Number(movieId);
+  if (!Number.isInteger(tmdbMovieId) || tmdbMovieId <= 0) notFound();
 
   const queryClient = getQueryClient();
   const [details, showtimes] = await Promise.all([

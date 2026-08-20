@@ -139,8 +139,11 @@ export function ShowtimeForm({ showtime }: ShowtimeFormProps) {
         <Label>Seat tier prices (USD)</Label>
         {TIERS.map((tier) => (
           <div key={tier} className="flex items-center gap-3">
-            <span className="w-24 text-sm text-gray-300">{tier}</span>
+            <Label htmlFor={`price-${tier}`} className="w-24 text-sm text-gray-300">
+              {tier}
+            </Label>
             <Input
+              id={`price-${tier}`}
               type="number"
               min="0"
               step="0.01"

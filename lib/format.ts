@@ -47,24 +47,19 @@ export function formatRelativeTime(date: string | null | undefined): string {
   if (seconds < 60) return "just now";
 
   const units: [number, Intl.RelativeTimeFormatUnit][] = [
+    [31536000, "year"],
+    [2629800, "month"], // 365.25 / 12 days, average
+    [604800, "week"],
+    [86400, "day"],
+    [3600, "hour"],
     [60, "minute"],
-    [60, "hour"],
-    [24, "day"],
-    [7, "week"],
-    [4.345, "month"],
-    [12, "year"],
   ];
 
-  let value = seconds;
-  let unit: Intl.RelativeTimeFormatUnit = "second";
-  for (const [amount, nextUnit] of units) {
-    if (value < amount) break;
-    value = Math.floor(value / amount);
-    unit = nextUnit;
-  }
+  const [unitSeconds, unit] =
+    units.find(([threshold]) => seconds >= threshold) ?? units[units.length - 1];
 
   return new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(
-    -value,
+    -Math.floor(seconds / unitSeconds),
     unit
   );
 }

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { X } from "lucide-react";
+import { Pencil, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,19 +82,29 @@ export function ShowsTable({ rows }: { rows: ShowRow[] }) {
                   ${(row.earningsCents / 100).toFixed(2)}
                 </td>
                 <td className="py-3 px-4">
-                  {!row.isCancelled && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCancelTarget(row);
-                      }}
-                      title="Cancel show"
-                      className="text-gray-500 hover:text-red-400 transition-colors cursor-pointer"
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href={`/admin/shows/${row.id}/edit`}
+                      onClick={(e) => e.stopPropagation()}
+                      title="Edit show"
+                      className="text-gray-500 hover:text-white transition-colors"
                     >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
+                      <Pencil className="w-4 h-4" />
+                    </Link>
+                    {!row.isCancelled && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCancelTarget(row);
+                        }}
+                        title="Cancel show"
+                        className="text-gray-500 hover:text-red-400 transition-colors cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

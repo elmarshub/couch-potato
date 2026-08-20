@@ -1,5 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import { fetchMediaDetails } from "@/features/media/api";
+import { mapWithConcurrency } from "@/lib/concurrency";
+
+const TMDB_FETCH_CONCURRENCY = 8;
+
+const STATUS_STYLES: Record<string, string> = {
+  PAID: "text-green-400",
+  PENDING: "text-yellow-400",
+  EXPIRED: "text-gray-500",
+  CANCELLED: "text-gray-500",
+  FAILED: "text-red-400",
+};
 
 export default async function AdminBookingsPage() {
   const bookings = await prisma.booking.findMany({
@@ -15,10 +26,10 @@ export default async function AdminBookingsPage() {
   const uniqueMovieIds = Array.from(
     new Set(bookings.map((b) => b.showtime.tmdbMovieId))
   );
-  const movieEntries = await Promise.all(
-    uniqueMovieIds.map(
-      async (id) => [id, await fetchMediaDetails("movie", id).catch(() => null)] as const
-    )
+  const movieEntries = await mapWithConcurrency(
+    uniqueMovieIds,
+    TMDB_FETCH_CONCURRENCY,
+    async (id) => [id, await fetchMediaDetails("movie", id).catch(() => null)] as const
   );
   const movieById = new Map(movieEntries);
 
@@ -37,6 +48,7 @@ export default async function AdminBookingsPage() {
                 <th className="py-3 px-4 font-medium">Movie name</th>
                 <th className="py-3 px-4 font-medium">Showtime</th>
                 <th className="py-3 px-4 font-medium">Seats</th>
+                <th className="py-3 px-4 font-medium">Status</th>
                 <th className="py-3 px-4 font-medium">Amount</th>
               </tr>
             </thead>
@@ -58,6 +70,13 @@ export default async function AdminBookingsPage() {
                       {booking.seats
                         .map((bs) => `${bs.seat.row}${bs.seat.number}`)
                         .join(", ")}
+                    </td>
+                    <td
+                      className={`py-3 px-4 font-medium ${
+                        STATUS_STYLES[booking.status] ?? "text-gray-300"
+                      }`}
+                    >
+                      {booking.status.charAt(0) + booking.status.slice(1).toLowerCase()}
                     </td>
                     <td className="py-3 px-4 text-gray-300">
                       ${(booking.amountCents / 100).toFixed(2)}

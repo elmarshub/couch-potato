@@ -90,8 +90,10 @@ model Showtime {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  seatPrices ShowtimeSeatPrice[]
-  bookings   Booking[]
+  seatPrices   ShowtimeSeatPrice[]
+  bookings     Booking[]
+  bookingSeats BookingSeat[]
+  notifications Notification[]
 
   @@index([tmdbMovieId])
   @@index([startsAt])
@@ -154,7 +156,8 @@ model Notification {
   showtimeId      String?
   createdAt       DateTime         @default(now())
 
-  reads NotificationRead[]
+  showtime Showtime? @relation(fields: [showtimeId], references: [id], onDelete: SetNull)
+  reads    NotificationRead[]
 
   @@index([createdAt])
   @@map("notifications")
@@ -181,8 +184,9 @@ model BookingSeat {
   seatId     String
   priceCents Int 
 
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  seat    Seat    @relation(fields: [seatId], references: [id], onDelete: Cascade)
+  booking  Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  seat     Seat     @relation(fields: [seatId], references: [id], onDelete: Cascade)
+  showtime Showtime @relation(fields: [showtimeId], references: [id], onDelete: Cascade)
 
   @@unique([showtimeId, seatId])
   @@index([bookingId])

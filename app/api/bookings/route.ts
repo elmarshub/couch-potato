@@ -13,11 +13,11 @@ import {
 } from "@/lib/api/guards";
 import { createBookingSchema, formatZodError } from "@/lib/api/validation";
 import { createCheckoutSessionForBooking } from "@/lib/stripe-checkout";
+import { HOLD_DURATION_MS } from "@/lib/booking-constants";
 
 export const runtime = "nodejs";
 
 const WRITE_LIMIT = { limit: 20, windowMs: 60_000 };
-const HOLD_DURATION_MS = 20 * 60 * 1000;
 
 const unauthorized = () =>
   NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -15,6 +15,12 @@ const TIER_LABELS: Record<SeatTier, string> = {
   VIP: "VIP Recliner",
 };
 
+const TIER_SWATCHES: Record<SeatTier, string> = {
+  STANDARD: "bg-blue-500/90",
+  PREMIUM: "bg-purple-500/90",
+  VIP: "bg-amber-500/90",
+};
+
 interface SeatMapProps {
   seats: SeatMapSeat[];
   selectedSeatIds: string[];
@@ -43,6 +49,10 @@ function Seat({
       disabled={seat.isTaken}
       onClick={onToggle}
       title={`${seat.row}${seat.number} · ${TIER_LABELS[seat.tier]}`}
+      aria-label={`Seat ${seat.row}${seat.number}, ${TIER_LABELS[seat.tier]}${
+        seat.isTaken ? ", taken" : isSelected ? ", selected" : ""
+      }`}
+      aria-pressed={seat.isTaken ? undefined : isSelected}
       className={cn(
         "relative flex items-center justify-center text-[10px] font-medium transition-all rounded-t-lg rounded-b-[3px]",
         isVip ? "w-8 h-8 sm:w-9 sm:h-9" : "w-6 h-6 sm:w-7 sm:h-7",
@@ -129,7 +139,7 @@ export function SeatMap({ seats, selectedSeatIds, onToggleSeat }: SeatMapProps) 
           .filter((tier) => !excludedTiers.includes(tier))
           .map((tier) => (
             <div key={tier} className="flex items-center gap-2">
-              <span className={cn("w-3 h-3 rounded-t", TIER_STYLES[tier].split(" ")[0])} />
+              <span className={cn("w-3 h-3 rounded-t", TIER_SWATCHES[tier])} />
               {TIER_LABELS[tier]}
             </div>
           ))}

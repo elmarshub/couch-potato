@@ -24,16 +24,6 @@ async function main() {
     }))
   );
 
-  const keep = new Set(seats.map((s) => `${s.row}${s.number}`));
-
-  const existing = await prisma.seat.findMany();
-  const toRemove = existing.filter((s) => !keep.has(`${s.row}${s.number}`));
-  if (toRemove.length > 0) {
-    await prisma.seat.deleteMany({
-      where: { id: { in: toRemove.map((s) => s.id) } },
-    });
-  }
-
   for (const seat of seats) {
     await prisma.seat.upsert({
       where: { row_number: { row: seat.row, number: seat.number } },
@@ -42,7 +32,7 @@ async function main() {
     });
   }
 
-  console.log(`Seeded ${seats.length} seats (removed ${toRemove.length} stale seats).`);
+  console.log(`Seeded ${seats.length} seats.`);
 }
 
 main()

@@ -75,7 +75,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex bg-[#0b0b0b] text-white">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-56 flex-shrink-0 border-r border-white/10 bg-[#111111] p-4 flex-col">
+      <aside className="hidden md:flex w-56 shrink-0 border-r border-white/10 bg-[#111111] p-4 flex-col">
         <SidebarNav />
       </aside>
 

@@ -51,6 +51,14 @@ export async function POST(request: Request) {
         skipDuplicates: true,
       });
     } else if (parsed.data.id) {
+      const notification = await prisma.notification.findUnique({
+        where: { id: parsed.data.id },
+        select: { id: true },
+      });
+      if (!notification) {
+        return NextResponse.json({ error: "Notification not found" }, { status: 404 });
+      }
+
       await prisma.notificationRead.upsert({
         where: {
           notificationId_userId: {
