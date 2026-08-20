@@ -12,6 +12,7 @@ import {
 import type { CastMember, MediaType } from "@/features/media/types";
 import { FavoriteButton } from "@/components/functional/favoriteButton";
 import WatchlistButton from "@/components/functional/watchlistButton";
+import { BookMovieCta } from "@/features/booking/components/book-movie-cta";
 import { TrailerPlayer } from "@/components/functional/trailer-player";
 import { EmptyState } from "@/components/functional/empty-state";
 import { cn } from "@/lib/utils";
@@ -149,6 +150,7 @@ export function MediaDetailView({ type, id }: MediaDetailViewProps) {
             <div className="flex gap-4">
               <FavoriteButton mediaId={details.id} mediaType={type} />
               <WatchlistButton mediaId={details.id} mediaType={type} />
+              {type === "movie" && <BookMovieCta tmdbMovieId={details.id} />}
             </div>
 
             {officialTrailer && (
