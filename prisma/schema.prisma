@@ -9,17 +9,25 @@ datasource db {
   url      = env("DATABASE_URL") // This points to Neon
 }
 
-// User model 
+enum Role {
+  USER
+  ADMIN
+}
+
+// User model
 model User {
   id        String   @id // Same ID as Supabase auth.users.id
   email     String   @unique
   name      String?
   avatarUrl String?
+  role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   favorites Favorite[]
   watchlist Watchlist[]
+  bookings  Booking[]
+  notificationReads NotificationRead[]
 
   @@map("users")
 }
@@ -52,4 +60,131 @@ model Watchlist {
   @@unique([userId, mediaType, mediaId])
   @@index([userId])
   @@map("watchlist")
+}
+
+// Fixed seat layout for the single virtual theater
+enum SeatTier {
+  STANDARD
+  PREMIUM
+  VIP
+}
+
+model Seat {
+  id     String   @id @default(uuid())
+  row    String // "A".."J"
+  number Int // 1..N
+  tier   SeatTier
+
+  bookingSeats BookingSeat[]
+
+  @@unique([row, number])
+  @@map("seats")
+}
+
+// A bookable screening of a TMDB movie
+model Showtime {
+  id          String   @id @default(uuid())
+  tmdbMovieId Int
+  startsAt    DateTime
+  isCancelled Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  seatPrices ShowtimeSeatPrice[]
+  bookings   Booking[]
+
+  @@index([tmdbMovieId])
+  @@index([startsAt])
+  @@map("showtimes")
+}
+
+// Per-tier price for a given showtime
+model ShowtimeSeatPrice {
+  id         String   @id @default(uuid())
+  showtimeId String
+  tier       SeatTier
+  priceCents Int
+
+  showtime Showtime @relation(fields: [showtimeId], references: [id], onDelete: Cascade)
+
+  @@unique([showtimeId, tier])
+  @@map("showtime_seat_prices")
+}
+
+enum BookingStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELLED
+  FAILED
+}
+
+model Booking {
+  id                      String        @id @default(uuid())
+  userId                  String
+  showtimeId              String
+  status                  BookingStatus @default(PENDING)
+  amountCents             Int
+  stripeCheckoutSessionId String?       @unique
+  stripePaymentIntentId   String?       @unique
+  expiresAt               DateTime
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  showtime Showtime      @relation(fields: [showtimeId], references: [id], onDelete: Cascade)
+  seats    BookingSeat[]
+
+  @@index([userId])
+  @@index([showtimeId])
+  @@index([status, expiresAt])
+  @@map("bookings")
+}
+
+enum NotificationType {
+  MOVIE_ADDED
+}
+
+model Notification {
+  id              String           @id @default(uuid())
+  type            NotificationType @default(MOVIE_ADDED)
+  tmdbMovieId     Int
+  movieTitle      String
+  moviePosterPath String?
+  showtimeId      String?
+  createdAt       DateTime         @default(now())
+
+  reads NotificationRead[]
+
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model NotificationRead {
+  id             String   @id @default(uuid())
+  notificationId String
+  userId         String
+  readAt         DateTime @default(now())
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([notificationId, userId])
+  @@index([userId])
+  @@map("notification_reads")
+}
+
+model BookingSeat {
+  id         String @id @default(uuid())
+  bookingId  String
+  showtimeId String
+  seatId     String
+  priceCents Int 
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  seat    Seat    @relation(fields: [seatId], references: [id], onDelete: Cascade)
+
+  @@unique([showtimeId, seatId])
+  @@index([bookingId])
+  @@map("booking_seats")
 }
