@@ -55,7 +55,7 @@ function Seat({
       aria-pressed={seat.isTaken ? undefined : isSelected}
       className={cn(
         "relative flex items-center justify-center text-[10px] font-medium transition-all rounded-t-lg rounded-b-[3px]",
-        isVip ? "w-8 h-8 sm:w-9 sm:h-9" : "w-6 h-6 sm:w-7 sm:h-7",
+        isVip ? "w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9" : "w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7",
         seat.isTaken
           ? "bg-white/10 text-gray-600 cursor-not-allowed"
           : cn(TIER_STYLES[seat.tier], "cursor-pointer text-white"),
@@ -102,9 +102,9 @@ export function SeatMap({ seats, selectedSeatIds, onToggleSeat }: SeatMapProps) 
           const [left, right] = splitForAisle(rowSeats);
 
           return (
-            <div key={row} className="flex items-center gap-3">
-              <span className="w-4 text-xs text-gray-500">{row}</span>
-              <div className="flex gap-1.5">
+            <div key={row} className="flex items-center gap-1.5 sm:gap-3">
+              <span className="w-3 sm:w-4 text-xs text-gray-500">{row}</span>
+              <div className="flex gap-1 sm:gap-1.5">
                 {left.map((seat) => (
                   <Seat
                     key={seat.id}
@@ -116,8 +116,8 @@ export function SeatMap({ seats, selectedSeatIds, onToggleSeat }: SeatMapProps) 
               </div>
               {right.length > 0 && (
                 <>
-                  <div className="w-4 sm:w-6" />
-                  <div className="flex gap-1.5">
+                  <div className="w-2 sm:w-4 md:w-6" />
+                  <div className="flex gap-1 sm:gap-1.5">
                     {right.map((seat) => (
                       <Seat
                         key={seat.id}
