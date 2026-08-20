@@ -87,13 +87,18 @@ export async function POST(request: Request) {
       include: { seatPrices: true },
     });
 
+    let details: { title?: string; poster_path?: string | null } | null = null;
     try {
-      const details = await fetchMediaDetails("movie", tmdbMovieId);
+      details = await fetchMediaDetails("movie", tmdbMovieId);
+    } catch (error) {
+      console.error("Error fetching movie details for notification:", error);
+    }
+    try {
       await prisma.notification.create({
         data: {
           tmdbMovieId,
-          movieTitle: details.title ?? "New movie",
-          moviePosterPath: details.poster_path,
+          movieTitle: details?.title ?? "New movie",
+          moviePosterPath: details?.poster_path ?? null,
           showtimeId: showtime.id,
         },
       });

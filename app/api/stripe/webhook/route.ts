@@ -15,6 +15,40 @@ async function releasePendingBooking(bookingId: string, status: "EXPIRED" | "FAI
   });
 }
 
+async function markBookingPaid(bookingId: string, paymentIntentId: string | null) {
+  await prisma.$transaction(async (tx) => {
+    const booking = await tx.booking.findUnique({ where: { id: bookingId } });
+    if (!booking || booking.status !== "PENDING") return;
+
+    // Same row lock admin cancellation takes (see DELETE in
+    // app/api/admin/showtimes/[id]/route.ts) so the two can't interleave.
+    await tx.$queryRaw`SELECT id FROM "showtimes" WHERE id = ${booking.showtimeId} FOR UPDATE`;
+
+    const showtime = await tx.showtime.findUnique({
+      where: { id: booking.showtimeId },
+    });
+
+    if (!showtime || showtime.isCancelled) {
+      // The showtime was cancelled while payment was in flight — its seat
+      // hold has already been released, so don't resurrect this booking as
+      // PAID. Flag it for a manual refund instead of silently dropping it.
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: { status: "CANCELLED", stripePaymentIntentId: paymentIntentId },
+      });
+      console.error(
+        `Booking ${bookingId} paid after its showtime was cancelled — needs manual refund`
+      );
+      return;
+    }
+
+    await tx.booking.update({
+      where: { id: bookingId },
+      data: { status: "PAID", stripePaymentIntentId: paymentIntentId },
+    });
+  });
+}
+
 export async function POST(request: Request) {
   const signature = request.headers.get("stripe-signature");
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -48,16 +82,32 @@ export async function POST(request: Request) {
             ? session.payment_intent
             : (session.payment_intent?.id ?? null);
 
-        const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
-        if (booking && booking.status === "PENDING") {
-          await prisma.booking.update({
-            where: { id: bookingId },
-            data: { status: "PAID", stripePaymentIntentId: paymentIntentId },
-          });
+        // For async payment methods (e.g. bank transfers), "completed" fires
+        // once checkout is filled out but before the payment actually
+        // succeeds — payment_status is still "unpaid" then. Only mark PAID
+        // once Stripe confirms the payment; the async_payment_succeeded case
+        // below handles the delayed-confirmation path.
+        if (session.payment_status === "paid") {
+          await markBookingPaid(bookingId, paymentIntentId);
         }
         break;
       }
 
+      case "checkout.session.async_payment_succeeded": {
+        const session = event.data.object;
+        const bookingId = session.metadata?.bookingId;
+        if (!bookingId) break;
+
+        const paymentIntentId =
+          typeof session.payment_intent === "string"
+            ? session.payment_intent
+            : (session.payment_intent?.id ?? null);
+
+        await markBookingPaid(bookingId, paymentIntentId);
+        break;
+      }
+
+      case "checkout.session.async_payment_failed":
       case "checkout.session.expired": {
         const session = event.data.object;
         const bookingId = session.metadata?.bookingId;

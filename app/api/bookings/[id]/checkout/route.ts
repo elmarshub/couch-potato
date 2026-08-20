@@ -59,6 +59,18 @@ export async function POST(
         { status: 409 }
       );
     }
+    if (booking.showtime.isCancelled) {
+      return NextResponse.json(
+        { error: "This showtime has been cancelled" },
+        { status: 409 }
+      );
+    }
+    if (booking.showtime.startsAt <= new Date()) {
+      return NextResponse.json(
+        { error: "This showtime has already started" },
+        { status: 409 }
+      );
+    }
 
 
     

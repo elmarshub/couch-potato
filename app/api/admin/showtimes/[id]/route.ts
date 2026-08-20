@@ -134,8 +134,13 @@ export async function DELETE(
 
     const { id } = await params;
 
-   
     const showtime = await prisma.$transaction(async (tx) => {
+      // Lock the showtime row so this can't interleave with a concurrent
+      // payment-completion transaction (see markBookingPaid in
+      // app/api/stripe/webhook/route.ts) — whichever commits first wins, and
+      // the other sees the resulting state instead of racing past it.
+      await tx.$queryRaw`SELECT id FROM "showtimes" WHERE id = ${id} FOR UPDATE`;
+
       await tx.bookingSeat.deleteMany({
         where: {
           showtimeId: id,

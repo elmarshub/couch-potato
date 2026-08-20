@@ -9,7 +9,6 @@ import { EmptyState } from "@/components/functional/empty-state";
 import { PayNowButton } from "@/features/booking/components/pay-now-button";
 import { Ticket } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { reconcileBookingWithStripe } from "@/lib/stripe-checkout";
 
 const PAGE_SIZE = 10;
 
@@ -45,15 +44,6 @@ export default async function MyBookingsPage({ searchParams }: Props) {
   ]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-
-  await Promise.all(
-    bookings
-      .filter((b) => b.status === "PENDING" && b.stripeCheckoutSessionId)
-      .map(async (b) => {
-        const result = await reconcileBookingWithStripe(b).catch(() => null);
-        if (result?.outcome === "already-paid") b.status = "PAID";
-      })
-  );
 
   const movies = await Promise.all(
     bookings.map((b) =>

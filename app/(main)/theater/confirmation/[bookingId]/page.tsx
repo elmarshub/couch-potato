@@ -20,14 +20,16 @@ export default async function BookingConfirmationPage({ params }: Props) {
 
   if (!booking || booking.userId !== user.id) notFound();
 
-  const movie = await fetchMediaDetails("movie", booking.showtime.tmdbMovieId);
+  const movie = await fetchMediaDetails("movie", booking.showtime.tmdbMovieId).catch(
+    () => null
+  );
 
   return (
     <main className="min-h-screen bg-[#141414] text-white pt-24 md:pt-28 pb-16">
       <div className="container mx-auto max-w-lg px-4">
         <BookingConfirmationView
           bookingId={booking.id}
-          movieTitle={movie.title ?? "Movie"}
+          movieTitle={movie?.title ?? "Movie"}
           initialBooking={JSON.parse(JSON.stringify(booking))}
         />
       </div>

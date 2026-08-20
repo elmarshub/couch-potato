@@ -22,15 +22,14 @@ export default function SelectSeatsPage({ params }: Props) {
   const createBooking = useCreateBookingMutation();
 
   const toggleSeat = (seat: SeatMapSeat) => {
-    setSelected((prev) => {
-      const exists = prev.find((s) => s.id === seat.id);
-      if (exists) return prev.filter((s) => s.id !== seat.id);
-      if (prev.length >= MAX_SEATS) {
-        toast.error(`You can select up to ${MAX_SEATS} seats`);
-        return prev;
-      }
-      return [...prev, seat];
-    });
+    const exists = selected.some((s) => s.id === seat.id);
+    if (!exists && selected.length >= MAX_SEATS) {
+      toast.error(`You can select up to ${MAX_SEATS} seats`);
+      return;
+    }
+    setSelected((prev) =>
+      exists ? prev.filter((s) => s.id !== seat.id) : [...prev, seat]
+    );
   };
 
   const totalCents = selected.reduce((sum, seat) => {

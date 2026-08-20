@@ -13,7 +13,7 @@ interface NowPlayingPickerProps {
 }
 
 export function NowPlayingPicker({ value, onChange }: NowPlayingPickerProps) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["admin", "tmdb-now-playing"],
     queryFn: () => fetchNowPlayingMovies(1),
   });
@@ -24,6 +24,21 @@ export function NowPlayingPicker({ value, onChange }: NowPlayingPickerProps) {
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="w-28 h-40 flex-shrink-0 bg-white/10 rounded-lg animate-pulse" />
         ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex items-center gap-3 py-4">
+        <p className="text-sm text-gray-400">Couldn&apos;t load now-playing movies.</p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="text-sm text-red-400 hover:text-red-300 cursor-pointer underline"
+        >
+          Retry
+        </button>
       </div>
     );
   }

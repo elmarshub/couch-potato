@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Bell } from "lucide-react";
+import { AlertCircle, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/functional/empty-state";
 import { getImageUrl, formatRelativeTime } from "@/lib/format";
@@ -13,7 +13,7 @@ import {
 } from "../queries";
 
 export function NotificationsList() {
-  const { data: notifications, isLoading } = useNotificationsQuery();
+  const { data: notifications, isLoading, isError, refetch } = useNotificationsQuery();
   const markReadMutation = useMarkNotificationReadMutation();
   const markAllReadMutation = useMarkAllNotificationsReadMutation();
 
@@ -21,6 +21,26 @@ export function NotificationsList() {
 
   if (isLoading) {
     return <p className="text-gray-400 text-sm">Loading...</p>;
+  }
+
+  if (isError) {
+    return (
+      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 px-4 text-center">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5">
+          <AlertCircle className="h-8 w-8 text-[#E50914]" />
+        </span>
+        <h1 className="text-2xl font-bold text-white">Couldn&apos;t load notifications</h1>
+        <p className="max-w-md text-white/60">
+          Something went wrong loading your notifications. Please try again.
+        </p>
+        <Button
+          onClick={() => refetch()}
+          className="mt-2 bg-[#E50914] font-medium text-white hover:bg-[#E50914]/80"
+        >
+          Retry
+        </Button>
+      </div>
+    );
   }
 
   if (!notifications || notifications.length === 0) {

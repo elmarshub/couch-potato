@@ -2,6 +2,9 @@ import type { Booking, BookingSeat, Showtime } from "@prisma/client";
 import { stripe } from "./stripe";
 import { prisma } from "./prisma";
 import { fetchMediaDetails } from "@/features/media/api";
+import { HOLD_DURATION_MS } from "@/lib/booking-constants";
+
+const STRIPE_MIN_SESSION_LIFETIME_SECONDS = 30 * 60;
 
 interface BookingWithSeats extends Booking {
   seats: BookingSeat[];
@@ -31,7 +34,11 @@ export async function createCheckoutSessionForBooking(
             name: `${movieTitle} — ${booking.seats.length} seat${
               booking.seats.length === 1 ? "" : "s"
             }`,
-            description: `Showtime: ${showtime.startsAt.toLocaleString()}`,
+            description: `Showtime: ${showtime.startsAt.toLocaleString("en-US", {
+            timeZone: "UTC",
+            dateStyle: "medium",
+            timeStyle: "short",
+          })} UTC`,
           },
           unit_amount: booking.amountCents,
         },
@@ -42,7 +49,9 @@ export async function createCheckoutSessionForBooking(
     payment_intent_data: { metadata: { bookingId: booking.id } },
     success_url: `${appUrl}/theater/confirmation/${booking.id}?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}/movies/${showtime.tmdbMovieId}/book/${showtime.id}/seats?cancelled=1`,
-    expires_at: Math.floor(Date.now() / 1000) + 30 * 60, // Stripe's minimum session lifetime
+    expires_at:
+      Math.floor(Date.now() / 1000) +
+      Math.max(STRIPE_MIN_SESSION_LIFETIME_SECONDS, HOLD_DURATION_MS / 1000),
   });
 
   if (!session.url) {
@@ -88,9 +97,33 @@ export async function reconcileBookingWithStripe(
         typeof session.payment_intent === "string"
           ? session.payment_intent
           : (session.payment_intent?.id ?? null);
-      await prisma.booking.update({
-        where: { id: booking.id },
-        data: { status: "PAID", stripePaymentIntentId: paymentIntentId },
+      // Same lock-and-verify guard as the webhook's markBookingPaid: don't
+      // resurrect this booking as PAID if its showtime was cancelled while
+      // payment was in flight.
+      await prisma.$transaction(async (tx) => {
+        const current = await tx.booking.findUnique({ where: { id: booking.id } });
+        if (!current || current.status !== "PENDING") return;
+
+        await tx.$queryRaw`SELECT id FROM "showtimes" WHERE id = ${booking.showtimeId} FOR UPDATE`;
+        const showtime = await tx.showtime.findUnique({
+          where: { id: booking.showtimeId },
+        });
+
+        if (!showtime || showtime.isCancelled) {
+          await tx.booking.update({
+            where: { id: booking.id },
+            data: { status: "CANCELLED", stripePaymentIntentId: paymentIntentId },
+          });
+          console.error(
+            `Booking ${booking.id} paid after its showtime was cancelled — needs manual refund`
+          );
+          return;
+        }
+
+        await tx.booking.update({
+          where: { id: booking.id },
+          data: { status: "PAID", stripePaymentIntentId: paymentIntentId },
+        });
       });
     }
     return { outcome: "already-paid" };

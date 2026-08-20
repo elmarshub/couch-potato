@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,15 @@ export function NotificationBell() {
 
   const count = unreadCount?.count ?? 0;
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [isOpen]);
+
   const handleSelect = (notification: Notification) => {
     setIsOpen(false);
     if (!notification.isRead) markReadMutation.mutate(notification.id);
@@ -40,6 +49,8 @@ export function NotificationBell() {
           variant="ghost"
           size="icon"
           onClick={() => setIsOpen((prev) => !prev)}
+          aria-label={count > 0 ? `Notifications, ${count} unread` : "Notifications"}
+          aria-expanded={isOpen}
           className="text-white hover:text-white hover:bg-white/10 cursor-pointer rounded-full transition-all relative"
         >
           <Bell className="w-5 h-5" />
@@ -126,14 +137,15 @@ export function NotificationBell() {
               </div>
 
               <div className="p-2 border-t border-white/10">
-                <Link href="/notifications" onClick={() => setIsOpen(false)}>
-                  <Button
-                    variant="ghost"
-                    className="w-full text-sm text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"
-                  >
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="w-full text-sm text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"
+                >
+                  <Link href="/notifications" onClick={() => setIsOpen(false)}>
                     View all
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             </motion.div>
           </>
