@@ -19,10 +19,19 @@ export async function createCheckoutSessionForBooking(
   );
   const movieTitle = movie?.title ?? `Movie #${showtime.tmdbMovieId}`;
 
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(
-    /\/$/,
-    ""
-  );
+  const vercelUrl = process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`;
+  const vercelProductionUrl =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL &&
+    `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  const preferProductionDomain = process.env.VERCEL_ENV === "production";
+
+  const appUrl = (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (preferProductionDomain ? vercelProductionUrl : vercelUrl) ||
+    vercelProductionUrl ||
+    vercelUrl ||
+    "http://localhost:3000"
+  ).replace(/\/$/, "");
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
