@@ -8,26 +8,43 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
       NEXT_PUBLIC_SUPABASE_URL: "https://ci-placeholder.supabase.co"
       NEXT_PUBLIC_SUPABASE_ANON_KEY: "ci-placeholder-anon-key"
       TMDB_API_READ_ACCESS_TOKEN: "ci-placeholder-token"
       NEXT_PUBLIC_TMDB_IMAGE_BASE: "https://image.tmdb.org/t/p"
-      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+      NEXT_PUBLIC_APP_URL: "https://couchpotato.vercel.app/"
+      STRIPE_SECRET_KEY: "sk_test_ci-placeholder"
+      STRIPE_WEBHOOK_SECRET: "whsec_ci-placeholder"
     steps:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+
+      - name: Apply database migrations
+        run: pnpm prisma migrate deploy
 
       - name: Build
         run: pnpm run build

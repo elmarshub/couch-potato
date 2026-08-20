@@ -52,4 +52,22 @@ export const queryKeys = {
     all: ["watchlist"] as const,
     list: () => [...queryKeys.watchlist.all, "list"] as const,
   },
+  admin: {
+    all: ["admin"] as const,
+    showtimes: () => [...queryKeys.admin.all, "showtimes"] as const,
+  },
+  booking: {
+    all: ["booking"] as const,
+    showtimesForMovie: (tmdbMovieId: number | string) =>
+      [...queryKeys.booking.all, "showtimes", String(tmdbMovieId)] as const,
+    seatMap: (showtimeId: string) =>
+      [...queryKeys.booking.all, "seat-map", showtimeId] as const,
+    detail: (bookingId: string) =>
+      [...queryKeys.booking.all, "detail", bookingId] as const,
+  },
+  notifications: {
+    all: ["notifications"] as const,
+    list: () => [...queryKeys.notifications.all, "list"] as const,
+    unreadCount: () => [...queryKeys.notifications.all, "unread-count"] as const,
+  },
 } as const;

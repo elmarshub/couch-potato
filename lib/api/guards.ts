@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { User } from "@prisma/client";
 
 type Bucket = { count: number; resetAt: number };
 
@@ -73,6 +74,13 @@ export function isSameOrigin(request: Request): boolean {
 
 export function forbiddenOriginResponse() {
   return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+}
+
+export function requireAdmin(user: User): NextResponse | null {
+  if (user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  return null;
 }
 
 export async function readJsonBody(request: Request): Promise<unknown> {
