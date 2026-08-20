@@ -16,7 +16,7 @@ enum Role {
 
 // User model
 model User {
-  id        String   @id // Same ID as Supabase auth.users.id
+  id        String   @id 
   email     String   @unique
   name      String?
   avatarUrl String?

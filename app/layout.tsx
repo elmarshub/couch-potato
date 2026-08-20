@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Anton, Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/providers";
@@ -12,6 +12,11 @@ const anton = Anton({
 });
 
 export const metadata: Metadata = baseMetadata;
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export default function RootLayout({
   children,
