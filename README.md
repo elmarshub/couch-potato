@@ -1,13 +1,23 @@
-# Couch Potato - Your Ultimate Movie & TV Discovery Platform
+# Couch Potato - Your Ultimate Movie & TV Discovery and Booking Platform
 
-A modern, responsive web application built with Next.js 15, React 19, and TypeScript that helps you discover, track, and manage your favorite movies and TV shows. Built with a cinematic design and smooth animations for an immersive viewing experience.
+A modern, responsive web application built with Next.js 15, React 19, and TypeScript that helps you discover, track, and book your favorite movies and TV shows. Beyond discovery, it's a full virtual theater: browse showtimes, pick real seats, and pay through Stripe — with a cinematic design and smooth animations throughout.
 
 ## Features
+
+### Discovery
 
 - **User Authentication**: Secure login/signup with Supabase Auth
 - **Watchlist Management**: Save movies and shows you want to watch later
 - **Favorites System**: Mark your favorite content for quick access
 - **Profile Management**: Customize your viewing preferences
+
+### Theater & Booking
+
+- **Admin Console**: Add movies to theaters as bookable showtimes with per-seat-tier pricing
+- **Interactive Seat Map**: Pick real seats (Standard/Premium/VIP) for a showtime
+- **Stripe Checkout**: Secure payment with webhook-reconciled bookings and automatic hold expiry
+- **Booking History**: Track pending and paid bookings from your profile
+- **Notifications**: Get an unread badge the moment a new movie is added to theaters, linking straight into booking with prices
 
 ## Tech Stack
 
@@ -19,7 +29,7 @@ A modern, responsive web application built with Next.js 15, React 19, and TypeSc
 - **Tailwind CSS 4** - Utility-first styling with custom design system
 - **Framer Motion** - Smooth animations and transitions
 - **Zod** - Used for validations
-- **React Hook Query** - Data fetching and caching
+- **TanStack Query** - Data fetching and caching
 
 ### Backend & Database
 
@@ -27,9 +37,9 @@ A modern, responsive web application built with Next.js 15, React 19, and TypeSc
 - **Prisma** - Type-safe database ORM
 - **PostgreSQL** - Relational database
 - **Next.js API Routes** - Serverless API endpoints
+- **Stripe** - Checkout payments and webhook-reconciled bookings
 
 ### Data & APIs
 
 - **TMDB API** - The Movie Database for movie/TV data
-- **React Query** - Server state management and caching
 - **Axios** - HTTP client for API requests
