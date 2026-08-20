@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Search, User, LogOut, Bookmark, Loader2 } from "lucide-react";
+import { Search, User, LogOut, Bookmark, Loader2, Ticket, ShieldCheck, Bell } from "lucide-react";
 import { navLinks } from "./navbarLinks";
 import { motion, AnimatePresence } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -11,6 +11,7 @@ import { useAuthContext } from "@/providers/auth-provider";
 import type { AuthUser } from "@/features/auth/types";
 import { getAvatarUrl, getInitials } from "@/lib/avatar";
 import { routes } from "@/lib/routes";
+import { useUnreadCountQuery } from "@/features/notifications/queries";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -27,6 +28,8 @@ const MobileMenu = ({
   user,
 }: MobileMenuProps) => {
   const { signOut, isSigningOut } = useAuthContext();
+  const { data: unreadCount } = useUnreadCountQuery();
+  const count = unreadCount?.count ?? 0;
 
   return (
     <AnimatePresence>
@@ -66,7 +69,7 @@ const MobileMenu = ({
             <div className="mx-4 mt-2 rounded-2xl bg-gradient-to-br from-[#1a1a1a]/95 via-[#141414]/95 to-[#0a0a0a]/95 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-red-600/5 via-transparent to-purple-600/5 pointer-events-none" />
 
-              <div className="relative px-4 py-6 space-y-6">
+              <div className="relative px-4 py-6 space-y-6 max-h-[calc(100dvh-96px)] overflow-y-auto">
                 {user && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
@@ -200,6 +203,23 @@ const MobileMenu = ({
 
                   {user ? (
                     <>
+                      <Link href="/notifications" onClick={onClose}>
+                        <motion.div whileTap={{ scale: 0.95 }}>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start gap-3 border-white/20 mb-3 hover:bg-white/10 text-white hover:border-white/30 transition-all rounded-xl py-6 relative"
+                          >
+                            <Bell className="w-5 h-5" />
+                            Notifications
+                            {count > 0 && (
+                              <span className="ml-auto min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-600 text-white text-xs font-semibold leading-none">
+                                {count > 9 ? "9+" : count}
+                              </span>
+                            )}
+                          </Button>
+                        </motion.div>
+                      </Link>
+
                       <Link href={routes.library} onClick={onClose}>
                         <motion.div whileTap={{ scale: 0.95 }}>
                           <Button
@@ -223,6 +243,32 @@ const MobileMenu = ({
                           </Button>
                         </motion.div>
                       </Link>
+
+                      <Link href="/profile/bookings" onClick={onClose}>
+                        <motion.div whileTap={{ scale: 0.95 }}>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start gap-3 border-white/20 mb-3 hover:bg-white/10 text-white hover:border-white/30 transition-all rounded-xl py-6"
+                          >
+                            <Ticket className="w-5 h-5" />
+                            My Bookings
+                          </Button>
+                        </motion.div>
+                      </Link>
+
+                      {user.role === "ADMIN" && (
+                        <Link href="/admin" onClick={onClose}>
+                          <motion.div whileTap={{ scale: 0.95 }}>
+                            <Button
+                              variant="outline"
+                              className="w-full justify-start gap-3 border-white/20 mb-3 hover:bg-white/10 text-white hover:border-white/30 transition-all rounded-xl py-6"
+                            >
+                              <ShieldCheck className="w-5 h-5" />
+                              Admin
+                            </Button>
+                          </motion.div>
+                        </Link>
+                      )}
 
                       <motion.div whileTap={{ scale: 0.95 }}>
                         <Button

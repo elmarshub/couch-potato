@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Search, Bell, Bookmark, User, LogOut, Loader2 } from "lucide-react";
+import { Search, Bookmark, User, LogOut, Loader2, ShieldCheck, Ticket } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -10,6 +10,7 @@ import { useAuthContext } from "@/providers/auth-provider";
 import type { AuthUser } from "@/features/auth/types";
 import { getAvatarUrl, getInitials } from "@/lib/avatar";
 import { routes } from "@/lib/routes";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
 
 interface NavbarActionsProps {
   user: AuthUser | null;
@@ -43,28 +44,7 @@ const NavbarActions = ({ user, isLoading }: NavbarActionsProps) => {
         </motion.div>
       </Link>
 
-      {user && (
-        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-white hover:text-white hover:bg-white/10 cursor-pointer rounded-full transition-all relative"
-          >
-            <Bell className="w-5 h-5" />
-            <motion.span
-              className="absolute top-1 right-1 w-2 h-2 bg-red-600 rounded-full"
-              animate={{
-                scale: [1, 1.2, 1],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          </Button>
-        </motion.div>
-      )}
+      {user && <NotificationBell />}
 
       {user ? (
         <div className="relative">
@@ -129,6 +109,26 @@ const NavbarActions = ({ user, isLoading }: NavbarActionsProps) => {
                         My Library
                       </Button>
                     </Link>
+                    <Link href="/profile/bookings">
+                      <Button
+                        onClick={() => setShowUserMenu(false)}
+                        className="w-full flex items-center cursor-pointer justify-start gap-3 px-3 py-2 text-white hover:bg-white/10 rounded-lg transition-colors text-sm"
+                      >
+                        <Ticket className="w-4 h-4" />
+                        My Bookings
+                      </Button>
+                    </Link>
+                    {user.role === "ADMIN" && (
+                      <Link href="/admin">
+                        <Button
+                          onClick={() => setShowUserMenu(false)}
+                          className="w-full flex items-center cursor-pointer justify-start gap-3 px-3 py-2 text-white hover:bg-white/10 rounded-lg transition-colors text-sm"
+                        >
+                          <ShieldCheck className="w-4 h-4" />
+                          Admin
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                   <div className="p-2 border-t border-white/10">
                     <Button

@@ -38,6 +38,37 @@ export function formatRuntime(minutes: number | null | undefined): string {
   return remainder ? `${hours}h ${remainder}m` : `${hours}h`;
 }
 
+export function formatRelativeTime(date: string | null | undefined): string {
+  if (!date) return "";
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "";
+
+  const seconds = Math.round((Date.now() - parsed.getTime()) / 1000);
+  if (seconds < 60) return "just now";
+
+  const units: [number, Intl.RelativeTimeFormatUnit][] = [
+    [60, "minute"],
+    [60, "hour"],
+    [24, "day"],
+    [7, "week"],
+    [4.345, "month"],
+    [12, "year"],
+  ];
+
+  let value = seconds;
+  let unit: Intl.RelativeTimeFormatUnit = "second";
+  for (const [amount, nextUnit] of units) {
+    if (value < amount) break;
+    value = Math.floor(value / amount);
+    unit = nextUnit;
+  }
+
+  return new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(
+    -value,
+    unit
+  );
+}
+
 export function calculateAge(
   birthday: string | null | undefined,
   until: string | null | undefined = null

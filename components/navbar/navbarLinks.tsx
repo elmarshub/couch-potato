@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Home, Clapperboard, Tv } from "lucide-react";
+import { Home, Clapperboard, Tv, Ticket } from "lucide-react";
 
 interface NavLink {
   name: string;
@@ -16,6 +16,7 @@ export const navLinks: NavLink[] = [
     icon: <Clapperboard className="w-4 h-4" />,
   },
   { name: "Shows", href: "/tvshows", icon: <Tv className="w-4 h-4" /> },
+  { name: "Theater", href: "/theater", icon: <Ticket className="w-4 h-4" /> },
 ];
 
 interface NavbarLinksProps {

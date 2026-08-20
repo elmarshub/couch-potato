@@ -1,8 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/profile", "/watchlist", "/library"];
+const PROTECTED_PREFIXES = ["/profile", "/watchlist", "/library", "/admin", "/theater"];
 const AUTH_PREFIXES = ["/login", "/signup"];
+const BOOKING_FLOW_PATTERN = /^\/movies\/[^/]+\/book(\/.*)?$/;
 
 function matchesPrefix(pathname: string, prefixes: string[]): boolean {
   return prefixes.some(
@@ -40,7 +41,10 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  if (!user && matchesPrefix(pathname, PROTECTED_PREFIXES)) {
+  if (
+    !user &&
+    (matchesPrefix(pathname, PROTECTED_PREFIXES) || BOOKING_FLOW_PATTERN.test(pathname))
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = `?redirectTo=${encodeURIComponent(pathname)}`;
@@ -62,11 +66,18 @@ export const config = {
     "/profile/:path*",
     "/watchlist/:path*",
     "/library/:path*",
+    "/admin/:path*",
+    "/theater/:path*",
+    "/movies/:movieId/book",
+    "/movies/:movieId/book/:path*",
     "/login",
     "/signup",
     "/api/favorites/:path*",
     "/api/watchlist/:path*",
     "/api/profile/:path*",
     "/api/users/:path*",
+    "/api/admin/:path*",
+    "/api/bookings/:path*",
+    "/api/showtimes/:path*",
   ],
 };
