@@ -38,6 +38,32 @@ export function formatRuntime(minutes: number | null | undefined): string {
   return remainder ? `${hours}h ${remainder}m` : `${hours}h`;
 }
 
+export function formatRelativeTime(date: string | null | undefined): string {
+  if (!date) return "";
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "";
+
+  const seconds = Math.round((Date.now() - parsed.getTime()) / 1000);
+  if (seconds < 60) return "just now";
+
+  const units: [number, Intl.RelativeTimeFormatUnit][] = [
+    [31536000, "year"],
+    [2629800, "month"], // 365.25 / 12 days, average
+    [604800, "week"],
+    [86400, "day"],
+    [3600, "hour"],
+    [60, "minute"],
+  ];
+
+  const [unitSeconds, unit] =
+    units.find(([threshold]) => seconds >= threshold) ?? units[units.length - 1];
+
+  return new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(
+    -Math.floor(seconds / unitSeconds),
+    unit
+  );
+}
+
 export function calculateAge(
   birthday: string | null | undefined,
   until: string | null | undefined = null
