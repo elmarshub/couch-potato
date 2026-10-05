@@ -6,6 +6,8 @@ import { getImageUrl } from "@/lib/format";
 import { EmptyState } from "@/components/functional/empty-state";
 import { Ticket } from "lucide-react";
 
+export const revalidate = 300;
+
 export default async function BookingsPage() {
   const showtimes = await prisma.showtime.findMany({
     where: { isCancelled: false, startsAt: { gt: new Date() } },
