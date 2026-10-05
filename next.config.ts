@@ -45,6 +45,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["@prisma/client", "prisma"],
   images: {
+    // TMDB already serves pre-sized images (w500, w1280, ...); skip Vercel's optimiser.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
@@ -65,7 +67,8 @@ const nextConfig: NextConfig = {
         headers: securityHeaders,
       },
       {
-        source: "/api/:path((?!tmdb).*)",
+        // /api/tmdb and the public showtimes list set their own CDN Cache-Control.
+        source: "/api/:path((?!tmdb|showtimes$).*)",
         headers: [{ key: "Cache-Control", value: "private, no-store, max-age=0" }],
       },
     ];

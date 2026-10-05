@@ -262,7 +262,7 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8, duration: 0.5 }}
             >
-              <Link href={`/movies/${currentMovie.id}`}>
+              <Link href={`/movies/${currentMovie.id}`} prefetch={false}>
                 <motion.button
                   className="flex items-center cursor-pointer gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-md bg-white text-black font-semibold hover:bg-white/90 transition-all shadow-lg text-sm sm:text-base"
                   whileHover={{ scale: 1.05 }}
@@ -273,7 +273,7 @@ export function HeroCarousel({ movies }: HeroCarouselProps) {
                 </motion.button>
               </Link>
 
-              <Link href={`/movies/${currentMovie.id}`}>
+              <Link href={`/movies/${currentMovie.id}`} prefetch={false}>
                 <motion.button
                   className="flex items-center cursor-pointer gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-md bg-gray-500/70 backdrop-blur-sm text-white font-semibold hover:bg-gray-500/90 transition-all border border-gray-400/30 text-sm sm:text-base"
                   whileHover={{ scale: 1.05 }}

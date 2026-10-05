@@ -41,6 +41,15 @@ export function isAllowedTMDBPath(path: string): boolean {
   return ALLOWED_TMDB_PATHS.some((prefix) => path.startsWith(prefix));
 }
 
+const DETAIL_PATH = /^\/(movie|tv|person)\/\d+(\/|$)/;
+
+function revalidateFor(endpoint: string): number {
+  if (DETAIL_PATH.test(endpoint) || endpoint.startsWith("/genre/")) {
+    return 86400;
+  }
+  return 3600;
+}
+
 function serializeParams(params: TmdbParams): [string, string][] {
   return Object.entries(params)
     .filter(([, value]) => value !== undefined && value !== null && value !== "")
@@ -78,7 +87,7 @@ export async function fetchFromTMDBServer<T>(
 
   const res = await fetch(url.toString(), {
     headers,
-    next: { revalidate: 300 },
+    next: { revalidate: revalidateFor(endpoint) },
     signal: AbortSignal.timeout(8000),
   });
 

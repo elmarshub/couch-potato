@@ -14,7 +14,7 @@ interface TvCardProps {
 
 export function TvCard({ show, showRanking = false, ranking }: TvCardProps) {
   return (
-    <Link href={`/tvshows/${show.id}`} className="group relative">
+    <Link href={`/tvshows/${show.id}`} prefetch={false} className="group relative">
       <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-800">
         <Image
           src={getImageUrl(show.poster_path, "w500")}

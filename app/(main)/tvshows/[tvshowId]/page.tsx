@@ -4,6 +4,12 @@ import { MediaDetailView } from "@/features/media/components/media-detail-view";
 import { getQueryClient } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
 
+export const revalidate = 86400;
+export const dynamicParams = true;
+export function generateStaticParams() {
+  return [];
+}
+
 interface Props {
   params: Promise<{ tvshowId: string }>;
 }

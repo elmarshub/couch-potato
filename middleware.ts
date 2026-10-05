@@ -72,12 +72,5 @@ export const config = {
     "/movies/:movieId/book/:path*",
     "/login",
     "/signup",
-    "/api/favorites/:path*",
-    "/api/watchlist/:path*",
-    "/api/profile/:path*",
-    "/api/users/:path*",
-    "/api/admin/:path*",
-    "/api/bookings/:path*",
-    "/api/showtimes/:path*",
   ],
 };
