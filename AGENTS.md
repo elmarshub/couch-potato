@@ -68,5 +68,7 @@ per-instance; move it to Redis/Upstash if you need hard guarantees.
 - `middleware.ts` calls `supabase.auth.getUser()` on **every** matched request.
   This is what refreshes expiring tokens; skipping it logs users out at random.
 - `/api/tmdb` is excluded from the middleware matcher so it stays CDN-cacheable.
+- No `/api/*` route is in the matcher: API routes authenticate with the bearer
+  token, not cookies, so middleware there would only add a paid invocation.
 - Post-login redirects must pass through `safeRedirect()` in `hooks/useAuth.ts`
   to prevent open redirects.

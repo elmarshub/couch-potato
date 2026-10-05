@@ -2,6 +2,12 @@ import type { Metadata } from "next";
 import { fetchPerson } from "@/features/media/api";
 import { generatePersonMetadata } from "@/lib/metadata";
 
+export const revalidate = 86400;
+export const dynamicParams = true;
+export function generateStaticParams() {
+  return [];
+}
+
 type Props = {
   params: Promise<{ personId: string }>;
 };

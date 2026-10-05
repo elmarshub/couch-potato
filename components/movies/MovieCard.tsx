@@ -26,7 +26,7 @@ export function MovieCard({
       whileHover={{ scale: 1.02 }}
       className="group relative"
     >
-      <Link href={`/movies/${movie.id}?type=movie`}>
+      <Link href={`/movies/${movie.id}`} prefetch={false}>
         <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-800">
           <Image
             src={getImageUrl(movie.poster_path, "w500")}

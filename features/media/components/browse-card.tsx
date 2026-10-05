@@ -27,6 +27,7 @@ export function BrowseCard({
   return (
     <Link
       href={href}
+      prefetch={false}
       className={`group relative rounded-lg outline-none ${
         highlighted ? "ring-2 ring-red-600" : ""
       }`}

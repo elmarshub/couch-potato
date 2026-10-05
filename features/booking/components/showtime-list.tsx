@@ -27,7 +27,7 @@ export function ShowtimeList({ tmdbMovieId }: ShowtimeListProps) {
         title="No showtimes available"
         message="There are no upcoming showtimes for this movie right now."
         actionLabel="Back to movie"
-        actionHref={`/movies/${tmdbMovieId}?type=movie`}
+        actionHref={`/movies/${tmdbMovieId}`}
       />
     );
   }
