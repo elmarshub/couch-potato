@@ -5,7 +5,7 @@
 ```bash
 npx prisma generate      # required after touching prisma/schema.prisma
 npx tsc --noEmit         # typecheck
-pnpm test                # Vitest; booking tests need TEST_DATABASE_URL (local Postgres, see docs/adr/0001)
+pnpm test                # Vitest; booking tests need TEST_DATABASE_URL (dedicated local Postgres named `test`, `ci` or `*_test`; it gets wiped)
 npx next build           # full build; lint + type errors FAIL the build (by design)
 npx next start -p 3000   # smoke-test the production build
 ```
@@ -71,7 +71,6 @@ per-instance; move it to Redis/Upstash if you need hard guarantees.
   `bookings.*` and map typed failures with `responses.ts`; never touch
   `prisma.booking` / `bookingSeat` directly or re-derive the hold predicate.
 - Stripe sits behind `PaymentGateway`; tests use `createFakeGateway()`.
-- Domain vocabulary is in `GLOSSARY.md`.
 
 ### Auth
 

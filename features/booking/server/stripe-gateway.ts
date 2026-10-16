@@ -54,7 +54,11 @@ export function createStripeGateway(stripe: Stripe): PaymentGateway {
       });
 
       if (!session.url) throw new Error("STRIPE_SESSION_NO_URL");
-      return { id: session.id, url: session.url };
+      return {
+        id: session.id,
+        url: session.url,
+        expiresAt: new Date(session.expires_at * 1000),
+      };
     },
 
     async retrieveCheckoutSession(sessionId) {
@@ -69,7 +73,6 @@ export function createStripeGateway(stripe: Stripe): PaymentGateway {
   };
 }
 
-/** Stripe returns the payment intent as an id or an expanded object. */
 export function paymentIntentIdOf(
   paymentIntent: string | { id: string } | null | undefined
 ): string | null {

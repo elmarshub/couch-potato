@@ -13,6 +13,8 @@ export interface CheckoutSessionRequest {
 export interface CheckoutSession {
   id: string;
   url: string;
+  /** When the provider stops accepting payment; may exceed `payableForMs`. */
+  expiresAt: Date;
 }
 
 export interface CheckoutSessionState {
