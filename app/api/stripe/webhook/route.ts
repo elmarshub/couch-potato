@@ -36,11 +36,6 @@ export async function POST(request: Request) {
 
         const paymentIntentId = paymentIntentIdOf(session.payment_intent);
 
-        // For async payment methods (e.g. bank transfers), "completed" fires
-        // once checkout is filled out but before the payment actually
-        // succeeds — payment_status is still "unpaid" then. Only mark PAID
-        // once Stripe confirms the payment; the async_payment_succeeded case
-        // below handles the delayed-confirmation path.
         if (session.payment_status === "paid") {
           await bookings.markPaid(bookingId, paymentIntentId);
         }
@@ -63,13 +58,6 @@ export async function POST(request: Request) {
         const session = event.data.object;
         const bookingId = session.metadata?.bookingId;
         if (bookingId) await bookings.release(bookingId, "EXPIRED");
-        break;
-      }
-
-      case "payment_intent.payment_failed": {
-        const paymentIntent = event.data.object;
-        const bookingId = paymentIntent.metadata?.bookingId;
-        if (bookingId) await bookings.release(bookingId, "FAILED");
         break;
       }
 

@@ -3,16 +3,32 @@ import { PrismaClient } from "@prisma/client";
 import { createBookings } from "./bookings";
 import { createFakeGateway } from "./fake-gateway";
 
-
-const url = process.env.TEST_DATABASE_URL;
-if (url && !/@(localhost|127\.0\.0\.1)[:/]/.test(url)) {
-  throw new Error("TEST_DATABASE_URL must point at a local database");
+function testDatabaseUrl(): string {
+  const url = process.env.TEST_DATABASE_URL;
+  if (!url) {
+    throw new Error(
+      "TEST_DATABASE_URL is not set. Point it at a dedicated local test " +
+        "database with migrations applied (see AGENTS.md)."
+    );
+  }
+  const { hostname, pathname } = new URL(url);
+  const database = pathname.replace(/^\//, "");
+  const isLocal = hostname === "localhost" || hostname === "127.0.0.1";
+  const isDedicated = /^(ci|test)$|[_-]test$/.test(database);
+  if (!isLocal || !isDedicated) {
+    throw new Error(
+      `Refusing to run: TEST_DATABASE_URL must be a local database named ` +
+        `"test", "ci" or ending in "_test" (got "${database}" on ${hostname}).`
+    );
+  }
+  return url;
 }
 
 const HOLD_MS = 30 * 60 * 1000;
 const title = async () => "Test Movie";
 
-describe.skipIf(!url)("Booking module", () => {
+describe("Booking module", () => {
+  const url = testDatabaseUrl();
   const db = new PrismaClient({ datasourceUrl: url });
   let clock: Date;
   let gateway: ReturnType<typeof createFakeGateway>;
@@ -171,8 +187,8 @@ describe.skipIf(!url)("Booking module", () => {
       const id = held.value.booking.id;
 
       await bookings.cancelShowtime(showtimeId);
-      // cancelShowtime already expired the pending booking, so payment lands late.
-      expect(await bookings.markPaid(id, "pi_late")).toBe("ignored");
+      // cancelShowtime already expired the pending booking, so payment lands
+      expect(await bookings.markPaid(id, "pi_late")).toBe("cancelled-needs-refund");
       expect(
         (await db.booking.findUniqueOrThrow({ where: { id } })).status
       ).toBe("EXPIRED");
@@ -192,6 +208,29 @@ describe.skipIf(!url)("Booking module", () => {
         status: "CANCELLED",
         stripePaymentIntentId: "pi_late",
       });
+    });
+  });
+
+  describe("late payment", () => {
+    it("does not mark a released booking paid", async () => {
+      const held = await start("u1", [seatIds.a1]);
+      if (!held.ok) throw new Error("setup");
+      const id = held.value.booking.id;
+      await bookings.release(id, "FAILED");
+      // Someone else takes the freed seat.
+      expect((await start("u2", [seatIds.a1])).ok).toBe(true);
+
+      expect(await bookings.markPaid(id, "pi_late")).toBe("cancelled-needs-refund");
+      expect((await db.booking.findUniqueOrThrow({ where: { id } })).status).toBe(
+        "FAILED"
+      );
+    });
+
+    it("ignores a repeated payment notification for a paid booking", async () => {
+      const held = await start("u1", [seatIds.a1]);
+      if (!held.ok) throw new Error("setup");
+      await bookings.markPaid(held.value.booking.id, "pi_1");
+      expect(await bookings.markPaid(held.value.booking.id, "pi_1")).toBe("ignored");
     });
   });
 
@@ -285,6 +324,31 @@ describe.skipIf(!url)("Booking module", () => {
 
       expect(result.ok).toBe(true);
       expect(gateway.created).toHaveLength(2);
+    });
+
+    it("extends the hold to cover the checkout session's lifetime", async () => {
+      // Stripe-like gateway: sessions live at least 30 minutes, longer than the hold.
+      const shortHold = createBookings({
+        db,
+        gateway: createFakeGateway({ minSessionLifetimeMs: 30 * 60 * 1000 }),
+        now: () => clock,
+        holdDurationMs: 5 * 60 * 1000,
+      });
+      const held = await shortHold.start({
+        userId: "u1",
+        showtimeId,
+        seatIds: [seatIds.a1],
+        movieTitle: title,
+      });
+      if (!held.ok) throw new Error("setup");
+
+      const booking = await db.booking.findUniqueOrThrow({
+        where: { id: held.value.booking.id },
+      });
+      const sessionLifetimeMs = 30 * 60 * 1000 - 5000; // allow for test runtime
+      expect(booking.expiresAt.getTime() - clock.getTime()).toBeGreaterThan(
+        sessionLifetimeMs
+      );
     });
 
     it("hides other customers' bookings and refuses expired or non-pending ones", async () => {

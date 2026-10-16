@@ -72,18 +72,38 @@ export function createBookings({
     paymentIntentId: string | null
   ): Promise<MarkPaidOutcome> {
     return db.$transaction(async (tx) => {
-      const booking = await tx.booking.findUnique({ where: { id: bookingId } });
-      if (!booking || booking.status !== "PENDING") return "ignored";
+      const ref = await tx.booking.findUnique({
+        where: { id: bookingId },
+        select: { showtimeId: true },
+      });
+      if (!ref) return "ignored";
 
-      await lockShowtime(tx, booking.showtimeId);
+      // Lock before reading state, so a release or cancellation that won the
+      // lock is visible to the re-read below instead of being overwritten.
+      await lockShowtime(tx, ref.showtimeId);
+      const booking = await tx.booking.findUnique({ where: { id: bookingId } });
+      if (!booking || booking.status === "PAID" || booking.status === "CANCELLED") {
+        return "ignored";
+      }
+
+      if (booking.status !== "PENDING") {
+        // Paid after the hold was released (expired or failed): the seats may
+        // already belong to someone else, so don't resurrect it.
+        console.error(
+          `Booking ${bookingId} paid after it was ${booking.status.toLowerCase()} — needs manual refund`
+        );
+        return "cancelled-needs-refund";
+      }
+
       const showtime = await tx.showtime.findUnique({
         where: { id: booking.showtimeId },
       });
 
       if (!showtime || showtime.isCancelled) {
-      
-        await tx.booking.update({
-          where: { id: bookingId },
+        // Cancelled while payment was in flight: its Hold is already
+        // released, so don't resurrect it as Paid. Flag it for a refund.
+        await tx.booking.updateMany({
+          where: { id: bookingId, status: "PENDING" },
           data: { status: "CANCELLED", stripePaymentIntentId: paymentIntentId },
         });
         console.error(
@@ -92,16 +112,24 @@ export function createBookings({
         return "cancelled-needs-refund";
       }
 
-      await tx.booking.update({
-        where: { id: bookingId },
+      const { count } = await tx.booking.updateMany({
+        where: { id: bookingId, status: "PENDING" },
         data: { status: "PAID", stripePaymentIntentId: paymentIntentId },
       });
-      return "paid";
+      return count === 1 ? "paid" : "ignored";
     });
   }
 
   async function release(bookingId: string, status: "EXPIRED" | "FAILED") {
     await db.$transaction(async (tx) => {
+      const ref = await tx.booking.findUnique({
+        where: { id: bookingId },
+        select: { showtimeId: true },
+      });
+      if (!ref) return;
+
+      // Same lock as markPaid, so a release can't interleave with payment.
+      await lockShowtime(tx, ref.showtimeId);
       const booking = await tx.booking.findUnique({ where: { id: bookingId } });
       if (!booking || booking.status !== "PENDING") return;
 
@@ -128,7 +156,11 @@ export function createBookings({
     });
   }
 
-  /** Opens a checkout session for a Pending Booking and records it. */
+  /**
+   * Opens a checkout session for a Pending Booking and records it. The Hold is
+   * extended to cover the session's lifetime, so a customer can never pay
+   * for a session whose Seats have already been released.
+   */
   async function openCheckout(
     booking: Booking & { seats: unknown[] },
     showtime: { id: string; tmdbMovieId: number; startsAt: Date },
@@ -142,12 +174,19 @@ export function createBookings({
       seatCount: booking.seats.length,
       startsAt: showtime.startsAt,
       amountCents: booking.amountCents,
-      payableForMs: holdDurationMs,
+      payableForMs: Math.max(0, booking.expiresAt.getTime() - now().getTime()),
     });
-    await db.booking.update({
-      where: { id: booking.id },
-      data: { stripeCheckoutSessionId: session.id },
+
+    const { count } = await db.booking.updateMany({
+      where: { id: booking.id, status: "PENDING" },
+      data: {
+        stripeCheckoutSessionId: session.id,
+        expiresAt: new Date(
+          Math.max(booking.expiresAt.getTime(), session.expiresAt.getTime())
+        ),
+      },
     });
+    if (count !== 1) throw new Error("BOOKING_NO_LONGER_PENDING");
     return session.url;
   }
 
@@ -196,6 +235,10 @@ export function createBookings({
     let held: Held;
     try {
       held = await db.$transaction(async (tx): Promise<Held> => {
+        // Same lock as cancelShowtime and markPaid, so a booking can't be
+        // created on a showtime that is being cancelled.
+        await lockShowtime(tx, showtimeId);
+
         const showtime = await tx.showtime.findUnique({
           where: { id: showtimeId },
           include: { seatPrices: true },

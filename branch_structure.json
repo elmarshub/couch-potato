@@ -1,0 +1,21 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "dev",
+    "fix/vercel-usage",
+    "main",
+    "origin"
+  ],
+  "parent": {
+    "dev": "main",
+    "fix/vercel-usage": "main",
+    "main": null,
+    "origin": "main"
+  },
+  "order": [
+    "main",
+    "dev",
+    "fix/vercel-usage",
+    "origin"
+  ]
+}

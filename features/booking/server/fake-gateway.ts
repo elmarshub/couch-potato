@@ -11,7 +11,9 @@ export interface FakePaymentGateway extends PaymentGateway {
   expireSession(sessionId: string): void;
 }
 
-export function createFakeGateway(): FakePaymentGateway {
+export function createFakeGateway(
+  { minSessionLifetimeMs = 0 }: { minSessionLifetimeMs?: number } = {}
+): FakePaymentGateway {
   const sessions = new Map<string, CheckoutSessionState>();
   const created: CheckoutSessionRequest[] = [];
   let pendingFailure: Error | null = null;
@@ -52,7 +54,8 @@ export function createFakeGateway(): FakePaymentGateway {
       const id = `cs_fake_${++counter}`;
       const url = `https://fake-checkout.test/${id}`;
       sessions.set(id, { paid: false, open: true, url, paymentIntentId: null });
-      return { id, url };
+      const lifetimeMs = Math.max(minSessionLifetimeMs, request.payableForMs);
+      return { id, url, expiresAt: new Date(Date.now() + lifetimeMs) };
     },
 
     async retrieveCheckoutSession(sessionId) {
