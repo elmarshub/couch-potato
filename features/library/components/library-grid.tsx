@@ -37,7 +37,7 @@ function LibraryCard({
   }
 
   return (
-    <Link href={routes.media(mediaType, mediaId)} className="group">
+    <Link href={routes.media(mediaType, mediaId)} prefetch={false} className="group">
       <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-gray-800">
         <Image
           src={getImageUrl(data?.poster_path, "w500")}

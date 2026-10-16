@@ -41,14 +41,14 @@ export function MovieCarouselContent({ movie }: MovieCarouselContentProps) {
           </p>
 
           <div className="flex flex-wrap gap-3 pt-2 mb-10">
-            <Link href={`/movies/${movie.id}`}>
+            <Link href={`/movies/${movie.id}`} prefetch={false}>
               <button className="flex cursor-pointer items-center gap-2 px-6 py-3 rounded-md bg-white text-black font-semibold hover:bg-white/90 transition-all shadow-lg hover:scale-105 transform duration-200">
                 <Play className="w-5 h-5 fill-current" />
                 Play Now
               </button>
             </Link>
 
-            <Link href={`/movies/${movie.id}`}>
+            <Link href={`/movies/${movie.id}`} prefetch={false}>
               <button className="flex cursor-pointer items-center gap-2 px-6 py-3 rounded-md bg-gray-500/70 backdrop-blur-sm text-white font-semibold hover:bg-gray-500/90 transition-all border border-gray-400/30">
                 <Info className="w-5 h-5" />
                 More Info

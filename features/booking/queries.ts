@@ -25,7 +25,7 @@ export function useSeatMapQuery(showtimeId: string) {
     queryKey: queryKeys.booking.seatMap(showtimeId),
     queryFn: () => fetchSeatMap(showtimeId),
     enabled: Boolean(showtimeId),
-    refetchInterval: 10_000,
+    refetchInterval: 20_000,
   });
 }
 
@@ -42,7 +42,7 @@ export function useBookingQuery(bookingId: string, initialData?: Booking) {
     enabled: Boolean(bookingId),
     initialData,
     refetchInterval: (query) =>
-      query.state.data?.status === "PENDING" ? 3000 : false,
+      query.state.data?.status === "PENDING" ? 5000 : false,
   });
 }
 

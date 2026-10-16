@@ -4,15 +4,19 @@ import { MediaDetailView } from "@/features/media/components/media-detail-view";
 import { getQueryClient } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
 
-interface Props {
-  params: Promise<{ movieId: string }>;
-  searchParams: Promise<{ type?: string }>;
+export const revalidate = 86400;
+export const dynamicParams = true;
+export function generateStaticParams() {
+  return [];
 }
 
-export default async function MovieDetailsPage({ params, searchParams }: Props) {
+interface Props {
+  params: Promise<{ movieId: string }>;
+}
+
+export default async function MovieDetailsPage({ params }: Props) {
   const { movieId } = await params;
-  const { type: typeParam } = await searchParams;
-  const type = typeParam === "tv" ? "tv" : "movie";
+  const type = "movie" as const;
 
   const queryClient = getQueryClient();
   await Promise.all([

@@ -102,7 +102,7 @@ export default function HomeInfiniteFeed() {
                   viewport={{ once: true }}
                   whileHover={{ scale: 1.02 }}
                 >
-                  <Link href={`/tvshows/${show.id}`} className="group">
+                  <Link href={`/tvshows/${show.id}`} prefetch={false} className="group">
                     <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-800">
                       <Image
                         src={getImageUrl(show.poster_path, "w500")}

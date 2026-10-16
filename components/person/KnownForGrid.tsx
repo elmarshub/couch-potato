@@ -24,7 +24,7 @@ export default function KnownForGrid({ items }: { items: PersonCredit[] }) {
           <Link
             key={`${c.media_type}-${c.id}`}
             href={routes.media(c.media_type, c.id)}
-            prefetch
+            prefetch={false}
             className="group"
           >
             <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-800">

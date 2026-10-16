@@ -169,7 +169,7 @@ export function MediaDetailView({ type, id }: MediaDetailViewProps) {
                       href={`/person/${cast.id}`}
                       key={cast.id}
                       className="w-24 sm:w-28 flex-shrink-0 text-center"
-                      prefetch
+                      prefetch={false}
                     >
                       <div className="relative w-24 h-32 sm:w-28 sm:h-36 rounded overflow-hidden shadow hover:scale-105 transition-transform">
                         <Image
@@ -193,7 +193,7 @@ export function MediaDetailView({ type, id }: MediaDetailViewProps) {
                 <h2 className="text-2xl font-semibold mb-3">Related</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                   {recommendations.slice(0, 12).map((m) => (
-                    <Link href={routes.media(type, m.id)} key={m.id} className="group relative">
+                    <Link href={routes.media(type, m.id)} key={m.id} prefetch={false} className="group relative">
                       <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-800">
                         <Image
                           src={getImageUrl(m.poster_path, "w500")}

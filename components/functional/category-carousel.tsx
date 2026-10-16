@@ -71,7 +71,7 @@ export function CategoryCarousel({
               <span className="text-xl sm:text-2xl">🔥</span>
             )}
           </h2>
-          <Link href={`/category/${categoryId}`} prefetch>
+          <Link href={`/category/${categoryId}`} prefetch={false}>
             <Button
               variant="ghost"
               className="text-white hover:text-red-500 gap-2 group cursor-pointer text-sm sm:text-base"
@@ -118,7 +118,7 @@ export function CategoryCarousel({
                 whileHover={{ scale: 1.02 }}
                 className="flex-shrink-0 w-[140px] sm:w-[160px] md:w-[180px] lg:w-[200px] group/card"
               >
-                <Link href={`/movies/${movie.id}`}>
+                <Link href={`/movies/${movie.id}`} prefetch={false}>
                   <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-800">
                     <Image
                       src={

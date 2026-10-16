@@ -47,6 +47,7 @@ export function InfiniteMovieGrid({
           <Link
             key={`${movie.id}-${index}`}
             href={`/movies/${movie.id}`}
+            prefetch={false}
             className="group relative"
           >
             {showRanking && (

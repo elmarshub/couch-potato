@@ -27,7 +27,7 @@ export function useUnreadCountQuery() {
     queryKey: queryKeys.notifications.unreadCount(),
     queryFn: fetchUnreadCount,
     enabled: isAuthenticated,
-    refetchInterval: 30_000,
+    refetchInterval: 120_000,
     staleTime: 1000 * 15,
   });
 }
