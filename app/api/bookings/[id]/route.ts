@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/supabase/auth";
-import { prisma } from "@/lib/prisma";
 import {
   extractBearerToken,
   rateLimit,
   rateLimitResponse,
   serverErrorResponse,
 } from "@/lib/api/guards";
-import { reconcileBookingWithStripe } from "@/lib/stripe-checkout";
+import { bookings } from "@/features/booking/server";
 
 export const runtime = "nodejs";
 
@@ -32,29 +31,9 @@ export async function GET(
 
     const { id } = await params;
 
-    let booking = await prisma.booking.findUnique({
-      where: { id },
-      include: { seats: { include: { seat: true } }, showtime: true },
-    });
-
-    if (!booking || booking.userId !== user.id) {
+    const booking = await bookings.get({ userId: user.id, bookingId: id });
+    if (!booking) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
-    }
-
-    // Self-heal against Stripe directly rather than relying solely on the
-    // webhook having arrived — this is what makes the confirmation page
-    // update correctly even if no webhook listener is forwarding events
-    // locally, and is a no-op once the webhook has already reconciled it.
-    if (booking.status === "PENDING" && booking.stripeCheckoutSessionId) {
-      const reconciliation = await reconcileBookingWithStripe(booking).catch(
-        () => null
-      );
-      if (reconciliation?.outcome === "already-paid") {
-        booking = await prisma.booking.findUnique({
-          where: { id },
-          include: { seats: { include: { seat: true } }, showtime: true },
-        });
-      }
     }
 
     return NextResponse.json(booking, {
