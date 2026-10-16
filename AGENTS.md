@@ -5,6 +5,7 @@
 ```bash
 npx prisma generate      # required after touching prisma/schema.prisma
 npx tsc --noEmit         # typecheck
+pnpm test                # Vitest; booking tests need TEST_DATABASE_URL (local Postgres, see docs/adr/0001)
 npx next build           # full build; lint + type errors FAIL the build (by design)
 npx next start -p 3000   # smoke-test the production build
 ```
@@ -38,13 +39,13 @@ value into the client bundle, which published the TMDB key to every visitor.
 
 ### TMDB access
 
-- All TMDB calls go through `fetchFromTMDB()` in `lib/tmdb/fetcher.ts`.
+- All TMDB calls go through `fetchFromTMDB()` in `lib/tmdb/client.ts`.
 - On the server it calls TMDB directly with the credential.
 - In the browser it calls `/api/tmdb`, a proxy that enforces an endpoint
   allowlist (`ALLOWED_TMDB_PATHS`), a query-param allowlist
   (`ALLOWED_TMDB_PARAMS`) and a per-IP rate limit.
 - Never call `api.themoviedb.org` directly from a component or hook, and never
-  read a TMDB credential outside `lib/tmdb/fetcher.ts`.
+  read a TMDB credential outside `lib/tmdb/client.ts`.
 
 ### API route conventions
 
@@ -63,10 +64,19 @@ Every route under `app/api/` (except `/api/tmdb`) must:
 Helpers live in `lib/api/guards.ts`. The rate limiter is in-memory and therefore
 per-instance; move it to Redis/Upstash if you need hard guarantees.
 
+### Bookings
+
+- Booking rules (holds, expiry, payment, showtime cancellation) live in the
+  Booking module, `features/booking/server/`. Routes and pages call
+  `bookings.*` and map typed failures with `responses.ts`; never touch
+  `prisma.booking` / `bookingSeat` directly or re-derive the hold predicate.
+- Stripe sits behind `PaymentGateway`; tests use `createFakeGateway()`.
+- Domain vocabulary is in `GLOSSARY.md`.
+
 ### Auth
 
 - `middleware.ts` calls `supabase.auth.getUser()` on **every** matched request.
   This is what refreshes expiring tokens; skipping it logs users out at random.
 - `/api/tmdb` is excluded from the middleware matcher so it stays CDN-cacheable.
-- Post-login redirects must pass through `safeRedirect()` in `hooks/useAuth.ts`
+- Post-login redirects must pass through `safeRedirect()` in `features/auth/actions.ts`
   to prevent open redirects.
