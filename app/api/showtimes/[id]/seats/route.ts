@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/supabase/auth";
-import { prisma } from "@/lib/prisma";
+import { bookings } from "@/features/booking/server";
 import {
   extractBearerToken,
   rateLimit,
@@ -31,46 +31,11 @@ export async function GET(
 
     const { id } = await params;
 
-    const showtime = await prisma.showtime.findUnique({
-      where: { id },
-      include: { seatPrices: true },
-    });
-    if (!showtime) {
+    const seatMap = await bookings.seatMap(id);
+    if (!seatMap) {
       return NextResponse.json({ error: "Showtime not found" }, { status: 404 });
     }
-
-    const [allSeats, takenBookingSeats] = await Promise.all([
-      prisma.seat.findMany({ orderBy: [{ row: "asc" }, { number: "asc" }] }),
-      // A seat counts as taken if it's attached to a PAID booking, or a
-      // PENDING booking whose hold hasn't expired yet (lazy-expiry read side).
-      prisma.bookingSeat.findMany({
-        where: {
-          showtimeId: id,
-          booking: {
-            OR: [
-              { status: "PAID" },
-              { status: "PENDING", expiresAt: { gt: new Date() } },
-            ],
-          },
-        },
-        select: { seatId: true },
-      }),
-    ]);
-
-    const takenSeatIds = new Set(takenBookingSeats.map((bs) => bs.seatId));
-    const pricedTiers = new Set(showtime.seatPrices.map((p) => p.tier));
-
-    const seats = allSeats.map((seat) => ({
-      id: seat.id,
-      row: seat.row,
-      number: seat.number,
-      tier: seat.tier,
-      isTaken: takenSeatIds.has(seat.id),
-      // A seat is only bookable if this showtime actually offers a price for
-      // its tier — an admin can create a showtime without pricing every
-      // tier (e.g. no VIP), and those seats must never be selectable.
-      hasPrice: pricedTiers.has(seat.tier),
-    }));
+    const { showtime, seats } = seatMap;
 
     return NextResponse.json(
       { showtime, seats },

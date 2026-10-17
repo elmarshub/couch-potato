@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/supabase/auth";
-import { prisma } from "@/lib/prisma";
+import { bookings as bookingModule } from "@/features/booking/server";
 import { fetchMediaDetails } from "@/features/media/api";
 import { getImageUrl } from "@/lib/format";
 import { EmptyState } from "@/components/functional/empty-state";
@@ -24,24 +24,11 @@ export default async function MyBookingsPage({ searchParams }: Props) {
   const requestedPage = Number(pageParam);
   const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
-  const where = {
+  const { totalCount, bookings } = await bookingModule.listForUser({
     userId: user.id,
-    OR: [
-      { status: "PAID" as const },
-      { status: "PENDING" as const, expiresAt: { gt: new Date() } },
-    ],
-  };
-
-  const [totalCount, bookings] = await Promise.all([
-    prisma.booking.count({ where }),
-    prisma.booking.findMany({
-      where,
-      include: { showtime: true, seats: { include: { seat: true } } },
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-    }),
-  ]);
+    page,
+    pageSize: PAGE_SIZE,
+  });
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 

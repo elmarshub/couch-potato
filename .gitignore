@@ -39,3 +39,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local agent tooling (not pushed)
+/.agents/
+/.claude/
+/.vscode/
+/skills-lock.json
+
+# docs & notes stay local, except the README
+*.md
+!README.md
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat

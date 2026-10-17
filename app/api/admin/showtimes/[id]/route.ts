@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/supabase/auth";
 import { prisma } from "@/lib/prisma";
+import { bookings } from "@/features/booking/server";
 import {
   extractBearerToken,
   forbiddenOriginResponse,
@@ -134,28 +135,7 @@ export async function DELETE(
 
     const { id } = await params;
 
-    const showtime = await prisma.$transaction(async (tx) => {
-      // Lock the showtime row so this can't interleave with a concurrent
-      // payment-completion transaction (see markBookingPaid in
-      // app/api/stripe/webhook/route.ts) — whichever commits first wins, and
-      // the other sees the resulting state instead of racing past it.
-      await tx.$queryRaw`SELECT id FROM "showtimes" WHERE id = ${id} FOR UPDATE`;
-
-      await tx.bookingSeat.deleteMany({
-        where: {
-          showtimeId: id,
-          booking: { status: "PENDING" },
-        },
-      });
-      await tx.booking.updateMany({
-        where: { showtimeId: id, status: "PENDING" },
-        data: { status: "EXPIRED" },
-      });
-      return tx.showtime.update({
-        where: { id },
-        data: { isCancelled: true },
-      });
-    });
+    const showtime = await bookings.cancelShowtime(id);
 
     return NextResponse.json(showtime);
   } catch (error) {

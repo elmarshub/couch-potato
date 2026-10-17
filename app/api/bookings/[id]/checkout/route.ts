@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/supabase/auth";
-import { prisma } from "@/lib/prisma";
 import {
   extractBearerToken,
   forbiddenOriginResponse,
@@ -9,10 +8,8 @@ import {
   rateLimitResponse,
   serverErrorResponse,
 } from "@/lib/api/guards";
-import {
-  createCheckoutSessionForBooking,
-  reconcileBookingWithStripe,
-} from "@/lib/stripe-checkout";
+import { bookings, movieTitleFor } from "@/features/booking/server";
+import { payFailureResponse } from "@/features/booking/server/responses";
 
 export const runtime = "nodejs";
 
@@ -39,59 +36,14 @@ export async function POST(
 
     const { id } = await params;
 
-    const booking = await prisma.booking.findUnique({
-      where: { id },
-      include: { seats: true, showtime: true },
+    const result = await bookings.pay({
+      userId: user.id,
+      bookingId: id,
+      movieTitle: movieTitleFor,
     });
+    if (!result.ok) return payFailureResponse(result);
 
-    if (!booking || booking.userId !== user.id) {
-      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
-    }
-    if (booking.status !== "PENDING") {
-      return NextResponse.json(
-        { error: `This booking is ${booking.status.toLowerCase()} and can't be paid for` },
-        { status: 409 }
-      );
-    }
-    if (booking.expiresAt <= new Date()) {
-      return NextResponse.json(
-        { error: "This booking hold has expired" },
-        { status: 409 }
-      );
-    }
-    if (booking.showtime.isCancelled) {
-      return NextResponse.json(
-        { error: "This showtime has been cancelled" },
-        { status: 409 }
-      );
-    }
-    if (booking.showtime.startsAt <= new Date()) {
-      return NextResponse.json(
-        { error: "This showtime has already started" },
-        { status: 409 }
-      );
-    }
-
-
-    
-    const reconciliation = await reconcileBookingWithStripe(booking);
-
-    if (reconciliation.outcome === "already-paid") {
-      return NextResponse.json(
-        { error: "This booking has already been paid for" },
-        { status: 409 }
-      );
-    }
-
-    if (reconciliation.outcome === "reuse-existing-session") {
-      return NextResponse.json({ checkoutUrl: reconciliation.checkoutUrl });
-    }
-
-    const checkoutUrl = await createCheckoutSessionForBooking(
-      booking,
-      booking.showtime
-    );
-
+    const { checkoutUrl } = result.value;
     return NextResponse.json({ checkoutUrl });
   } catch (error) {
     return serverErrorResponse("Error creating checkout session", error);

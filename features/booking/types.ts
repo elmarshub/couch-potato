@@ -1,3 +1,5 @@
+import type { BookingStatus } from "@prisma/client";
+
 export type SeatTier = "STANDARD" | "PREMIUM" | "VIP";
 
 export interface ShowtimeSeatPrice {
@@ -36,7 +38,7 @@ export interface BookingSeat {
   seat?: { row: string; number: number };
 }
 
-export type BookingStatus = "PENDING" | "PAID" | "EXPIRED" | "CANCELLED" | "FAILED";
+export type { BookingStatus };
 
 export interface Booking {
   id: string;
