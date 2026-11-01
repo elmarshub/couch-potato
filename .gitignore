@@ -31,7 +31,6 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
 
 # vercel
 .vercel
@@ -43,9 +42,9 @@ next-env.d.ts
 # local agent tooling (not pushed)
 /.agents/
 /.claude/
-/.vscode/
 /skills-lock.json
 
 # docs & notes stay local, except the README
 *.md
 !README.md
+config.bat
