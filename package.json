@@ -4,9 +4,9 @@
   "private": true,
   "packageManager": "pnpm@11.20.0",
   "scripts": {
-    "dev": "node init && next dev --turbopack",
-    "build": "node init && prisma generate && next build",
-    "start": "node init && next start",
+    "dev": "next dev --turbopack",
+    "build": "prisma generate && next build",
+    "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
     "vercel-build": "prisma migrate deploy && prisma generate && next build",
